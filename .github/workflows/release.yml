@@ -1,0 +1,29 @@
+name: Release
+
+# Neue Version: VERSION in dist/energie-dashboard-card.js und CHANGELOG.md anpassen, dann Tag "v<Version>" pushen.
+# Tags mit Bindestrich (z. B. v1.0.0-beta.1) werden als Vorab-Version veroeffentlicht.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check version
+        run: |
+          V=$(grep -oP "^const VERSION = '\K[^']+" dist/energie-dashboard-card.js)
+          [ "v$V" = "${GITHUB_REF_NAME}" ] || { echo "Tag ${GITHUB_REF_NAME} does not match card version $V"; exit 1; }
+          node --check dist/energie-dashboard-card.js
+          awk "/^## \[$V\]/{f=1;next} /^## \[/{f=0} f" CHANGELOG.md > notes.md
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PRE=""; case "${GITHUB_REF_NAME}" in *-*) PRE="--prerelease";; esac
+          gh release create "${GITHUB_REF_NAME}" dist/energie-dashboard-card.js --title "${GITHUB_REF_NAME}" --notes-file notes.md $PRE
