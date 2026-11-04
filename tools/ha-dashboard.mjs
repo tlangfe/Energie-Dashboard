@@ -16,7 +16,7 @@
 // "zurueck" stellt das Dashboard aus der neuesten (oder angegebenen) Sicherung wieder her.
 import { readFileSync, writeFileSync } from 'node:fs';
 
-const VERSION = '1.0.0-beta.1';
+const VERSION = '1.0.0-beta.2';
 const TEST_PFAD = 'energie-test';
 const args = process.argv.slice(2), befehl = args[0];
 const opt = n => { const i = args.indexOf('--' + n); return i > 0 ? args[i + 1] : undefined; };

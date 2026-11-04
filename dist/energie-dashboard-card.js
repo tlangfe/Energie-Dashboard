@@ -27,7 +27,7 @@ const FAKTOR = {
   energy: { Wh: 1e-3, kWh: 1, MWh: 1e3, GWh: 1e6 },
   volume: { 'm³': 1, m3: 1, L: 1e-3, l: 1e-3, 'ft³': 0.0283168, ft3: 0.0283168, CCF: 2.83168, gal: 0.00378541 },
 };
-const VERSION = '1.0.0-beta.1';
+const VERSION = '1.0.0-beta.2';
 const TXT = {
   de: {
     title: 'Energie', solar: 'Solar', akku: 'Akku', bezug: 'Bezug', eingespeist: 'eingespeist', gas: 'Gas', wasser: 'Wasser', heute: 'heute', Heute: 'Heute',
@@ -796,7 +796,8 @@ async function sensorenErkennen(hass) {
 // ---------- Editor ----------
 const ED = {
   de: {
-    sec: { vorhanden: 'Was ist vorhanden', strom: 'Strom (Netz und Haus)', solar: 'Solar', akku: 'Akku', gas: 'Gas', wasser: 'Wasser', bild: 'Hausbild', anzeige: 'Anzeige' },
+    sec: { vorhanden: 'Was ist vorhanden', strom: 'Strom (Netz und Haus)', solar: 'Solar', akku: 'Akku', gas: 'Gas', wasser: 'Wasser', bild: 'Hausbild', anzeige: 'Anzeige', auswertung: 'Auswertung und Speichern' },
+    gespeichert: 'Gespeicherte Auswertung', gespeichertText: 'Mit „Auswertung in Home Assistant speichern“ legt die Karte Langzeitwerte mit der Kennung energie_auswertung:* an. Ohne diesen Schalter schreibt sie nichts. Hier lassen sich alle gespeicherten Werte wieder löschen (auch unter Entwicklerwerkzeuge › Statistik).', loeschen: 'Gespeicherte Auswertungswerte löschen', loeschenFrage: 'Alle gespeicherten Werte energie_auswertung:* endgültig löschen?', geloescht: 'Gelöscht.',
     erkennen: 'Sensoren automatisch erkennen', uebernehmen: 'Vorschlag übernehmen', verwerfen: 'Verwerfen', erkannt: 'Vorschlag der automatischen Erkennung', ausEnergie: 'aus den Energie-Einstellungen', ausGeraet: 'aus demselben Gerät',
     nichts: 'Es wurde nichts gefunden. In den Energie-Einstellungen von Home Assistant (Einstellungen › Dashboards › Energie) Netz, Solar und Akku eintragen oder die Sensoren unten selbst auswählen.',
     keinEnergie: 'Die Energie-Einstellungen konnten nicht gelesen werden.', vorzeichen: 'Akku-Leistung als ein Sensor übernommen: bitte prüfen, ob beim Laden die Linie zum Akku läuft, sonst „Vorzeichen umdrehen“ einschalten.',
@@ -807,7 +808,8 @@ const ED = {
     bildTipp: 'Freigestellte PNG/WebP (ohne Hintergrund) mit Form „frei“ sehen am besten aus. Normale Fotos mit Form „rund“ zuschneiden. Danach die Ankerpunkte auf Solarmodule, Akku und Hausmitte schieben.',
   },
   en: {
-    sec: { vorhanden: 'What do you have', strom: 'Power (grid and home)', solar: 'Solar', akku: 'Battery', gas: 'Gas', wasser: 'Water', bild: 'House image', anzeige: 'Display' },
+    sec: { vorhanden: 'What do you have', strom: 'Power (grid and home)', solar: 'Solar', akku: 'Battery', gas: 'Gas', wasser: 'Water', bild: 'House image', anzeige: 'Display', auswertung: 'Analysis and saving' },
+    gespeichert: 'Stored analysis', gespeichertText: 'With “Save analysis in Home Assistant” the card creates long-term statistics with the id energie_auswertung:*. Without this switch it writes nothing. All stored values can be deleted here (also under Developer tools › Statistics).', loeschen: 'Delete stored analysis values', loeschenFrage: 'Permanently delete all stored values energie_auswertung:*?', geloescht: 'Deleted.',
     erkennen: 'Detect sensors automatically', uebernehmen: 'Apply suggestion', verwerfen: 'Discard', erkannt: 'Suggestion from automatic detection', ausEnergie: 'from energy settings', ausGeraet: 'from the same device',
     nichts: 'Nothing was found. Add grid, solar and battery in the Home Assistant energy settings (Settings › Dashboards › Energy) or pick the sensors below yourself.',
     keinEnergie: 'The energy settings could not be read.', vorzeichen: 'Battery power was taken as a single sensor: check that the line runs towards the battery while charging, otherwise turn on “Invert sign”.',
@@ -843,6 +845,14 @@ const FELD = {
     anchor_solar_x: ['Anker Solarmodule ↔ (%)', 'Wo die Solar-Linien im Bild ankommen.'], anchor_solar_y: ['Anker Solarmodule ↕ (%)', ''], anchor_battery_x: ['Anker Akku ↔ (%)', 'Wo die Akku-Linien im Bild ankommen.'], anchor_battery_y: ['Anker Akku ↕ (%)', ''], anchor_home_x: ['Anker Hausmitte ↔ (%)', 'Treffpunkt von Netz, Haus, Gas und Wasser.'], anchor_home_y: ['Anker Hausmitte ↕ (%)', ''],
     title: ['Titel', 'Oben links auf der Karte. Leer = „Energie“.'], max_width: ['Größte Breite (px)', 'Empfohlen 420.'], language: ['Sprache', ''], dashboard_link: ['Link links unter dem Bild', 'Standard /energy'], dashboard_link_text: ['Text des Links', 'Leer = „Energie-Dashboard“'],
     solar_max: ['Solar-Spitzenleistung (W)', 'Nur für die Helligkeit der Sonne in der PV-Kachel.'], grid_max: ['Netz-Vollausschlag (W)', 'Nur für den Zeiger in der Zähler-Kachel.'],
+    output_power: ['Ausgang des Speichers (W/kW)', 'Optional, nur Auswertung: Leistung, mit der der Speicher regelt (z. B. Wechselrichter-Ausgang). Leer = Entlade-Leistung. Linie „Akku-Ausgang“ und Bewertung der Lastsprünge.'],
+    store_statistics: ['Auswertung in Home Assistant speichern', 'Zustimmung: Die Karte speichert für jeden abgeschlossenen Tag Auswertungswerte als Langzeitstatistik (energie_auswertung:*), damit sie die Sekundenwerte überdauern. Ausgeschaltet schreibt sie nichts.'],
+    raw_days: ['Sekundenwerte vorhanden (Tage)', 'Wie lange Home Assistant Rohdaten aufhebt (recorder: purge_keep_days, Standard 10). Ältere Tage werden nicht mehr ausgewertet.'],
+    start_date: ['Auswertung ab', 'Optional: erster Tag der Auswertung, z. B. nach einem Zählerwechsel. Leer = letzte 30 Tage.'],
+    show_regulation: ['Regelung bewerten', 'Nur sinnvoll für Akkus mit Nulleinspeisungs-Regelung. Aus: nur Einspeisung, Akku-Bilanz und Verlauf.'],
+    band_w: ['Toleranzband (W)', 'Netz gilt als ausgeregelt innerhalb ±diesem Wert; Einspeisung darunter zählt als Spitze. Standard 50.'], jump_w: ['Lastsprung ab (W)', 'Ab dieser Änderung in 3 s wird ein Lastsprung gewertet. Standard 120.'],
+    inverter_max_w: ['Höchstleistung Speicher (W)', 'Größte Ausgangsleistung des Speichers; nötig, um „ging mit“ zu bewerten.'], max_rate_s: ['Netz-Sensor höchstens alle (s)', 'Liefert der Netz-Sensor seltener, werden Reaktionszeiten ausgeblendet. Standard 2,5.'],
+    show_cause: ['Vermutete Ursache anzeigen (Test)', 'Ordnet Einspeise-Spitzen grob einer Ursache zu (Akku-Start, Last weg, Schwankung). Nur ein Anhaltspunkt, für andere Geräte nicht geprüft.'],
   },
   en: {
     show_solar: ['Solar installed', 'Turns on solar circle, solar lines and solar tile.'], show_battery: ['Battery installed', 'Turns on battery circle, battery lines, battery graphic and tile.'], show_gas: ['Gas', 'Turns on the gas circle at the bottom left.'], show_water: ['Water', 'Turns on the water circle at the bottom right.'],
@@ -867,6 +877,14 @@ const FELD = {
     anchor_solar_x: ['Anchor solar panels ↔ (%)', 'Where the solar lines meet the image.'], anchor_solar_y: ['Anchor solar panels ↕ (%)', ''], anchor_battery_x: ['Anchor battery ↔ (%)', 'Where the battery lines meet the image.'], anchor_battery_y: ['Anchor battery ↕ (%)', ''], anchor_home_x: ['Anchor house centre ↔ (%)', 'Meeting point of grid, home, gas and water.'], anchor_home_y: ['Anchor house centre ↕ (%)', ''],
     title: ['Title', 'Top left of the card. Empty = “Energy”.'], max_width: ['Maximum width (px)', 'Recommended 420.'], language: ['Language', ''], dashboard_link: ['Link below the image', 'Default /energy'], dashboard_link_text: ['Link text', 'Empty = “Energy dashboard”'],
     solar_max: ['Solar peak power (W)', 'Only for the brightness of the sun in the solar tile.'], grid_max: ['Grid full scale (W)', 'Only for the needle in the grid meter tile.'],
+    output_power: ['Storage output (W/kW)', 'Optional, analysis only: power the storage regulates with (e.g. inverter output). Empty = discharge power. Line “Battery output” and rating of load steps.'],
+    store_statistics: ['Save analysis in Home Assistant', 'Consent: the card stores analysis values for every completed day as long-term statistics (energie_auswertung:*) so they outlive the second values. When off it writes nothing.'],
+    raw_days: ['Second values kept (days)', 'How long Home Assistant keeps raw data (recorder: purge_keep_days, default 10). Older days are not analysed any more.'],
+    start_date: ['Analyse from', 'Optional: first day of the analysis, e.g. after a meter change. Empty = last 30 days.'],
+    show_regulation: ['Rate regulation', 'Only useful for batteries with zero-export regulation. Off: only export, battery balance and history.'],
+    band_w: ['Tolerance band (W)', 'The grid counts as settled within ± this value; export below counts as a peak. Default 50.'], jump_w: ['Load step from (W)', 'A change of at least this within 3 s counts as a load step. Default 120.'],
+    inverter_max_w: ['Storage maximum power (W)', 'Largest output of the storage; needed to rate “followed”.'], max_rate_s: ['Grid sensor at most every (s)', 'If the grid sensor reports less often, reaction times are hidden. Default 2.5.'],
+    show_cause: ['Show probable cause (test)', 'Roughly assigns export peaks to a cause (battery start, load dropped, fluctuation). Only a hint, not checked for other devices.'],
   },
 };
 const ENT = { entity: { filter: { domain: ['sensor', 'input_number'] } } };
@@ -923,9 +941,10 @@ class EnergieDashboardCardEditor extends HTMLElement {
   }
   connectedCallback() { this._render(); }
   get _l() { return sprache(this._config, this._hass); }
+  get _auswertung() { return String((this._config || {}).type || '').includes('auswertung'); }
   get _x() { return ED[this._l]; }
   _daten() {
-    const c = { ...DEFAULTS, ...this._config }, d = { ...c };
+    const c = { ...DEFAULTS, ...(this._auswertung ? A_DEFAULTS : {}), ...this._config }, d = { ...c };
     (Array.isArray(c.solar_strings) ? c.solar_strings : []).slice(0, 4).forEach((s, i) => { d['solar_string_' + (i + 1)] = typeof s === 'string' ? s : s.entity; d['solar_string_' + (i + 1) + '_name'] = typeof s === 'string' ? '' : s.name || ''; });
     delete d.solar_strings; delete d.type;
     // Fuer den Fall, dass ha-form "flatten" nicht kennt: Bereiche zusaetzlich verschachtelt fuellen
@@ -934,12 +953,19 @@ class EnergieDashboardCardEditor extends HTMLElement {
   }
   _schema() {
     const c = { ...DEFAULTS, ...(this._config || {}) }, x = this._x.sec, sec = (name, title, icon, schema, offen) => ({ type: 'expandable', name, title, icon, flatten: true, expanded: !!offen, schema });
+    const AW = this._auswertung;
     const s = [
-      sec('sec_vorhanden', x.vorhanden, 'mdi:toggle-switch-outline', [{ type: 'grid', name: '', schema: ['show_solar', 'show_battery', 'show_gas', 'show_water'].map(n => ({ name: n, selector: BOOL })) }], true),
+      sec('sec_vorhanden', x.vorhanden, 'mdi:toggle-switch-outline', [{ type: 'grid', name: '', schema: (AW ? ['show_solar', 'show_battery'] : ['show_solar', 'show_battery', 'show_gas', 'show_water']).map(n => ({ name: n, selector: BOOL })) }], true),
       sec('sec_strom', x.strom, 'mdi:transmission-tower', [{ name: 'grid_power', selector: ENT }, { name: 'grid_invert', selector: BOOL }, { name: 'grid_import_energy', selector: ENT }, { name: 'grid_export_energy', selector: ENT }, { name: 'home_power', selector: ENT }, { name: 'grid_import_power', selector: ENT }, { name: 'grid_export_power', selector: ENT }]),
     ];
     if (c.show_solar !== false) s.push(sec('sec_solar', x.solar, 'mdi:solar-power-variant-outline', [{ name: 'solar_power', selector: ENT }, { name: 'solar_energy', selector: ENT }, ...[1, 2, 3, 4].map(i => ({ type: 'grid', name: '', schema: [{ name: 'solar_string_' + i, selector: ENT }, { name: 'solar_string_' + i + '_name', selector: { text: {} } }] }))]));
-    if (c.show_battery !== false) s.push(sec('sec_akku', x.akku, 'mdi:battery-outline', [{ name: 'battery_soc', selector: ENT }, { name: 'battery_power', selector: ENT }, { name: 'battery_invert', selector: BOOL }, { name: 'battery_charge_power', selector: ENT }, { name: 'battery_discharge_power', selector: ENT }, { name: 'battery_energy_in', selector: ENT }, { name: 'battery_energy_out', selector: ENT }, { name: 'battery_capacity', selector: { number: { min: 0, max: 200, step: 0.01, mode: 'box', unit_of_measurement: 'kWh' } } }, { name: 'battery_content', selector: ENT }]));
+    if (c.show_battery !== false) s.push(sec('sec_akku', x.akku, 'mdi:battery-outline', [{ name: 'battery_soc', selector: ENT }, { name: 'battery_power', selector: ENT }, { name: 'battery_invert', selector: BOOL }, { name: 'battery_charge_power', selector: ENT }, { name: 'battery_discharge_power', selector: ENT }, { name: 'battery_energy_in', selector: ENT }, { name: 'battery_energy_out', selector: ENT }, { name: 'battery_capacity', selector: { number: { min: 0, max: 200, step: 0.01, mode: 'box', unit_of_measurement: 'kWh' } } }, { name: 'battery_content', selector: ENT }, ...(AW ? [{ name: 'output_power', selector: ENT }] : [])]));
+    if (AW) {
+      s.push(sec('sec_auswertung', x.auswertung, 'mdi:chart-timeline-variant', [{ name: 'store_statistics', selector: BOOL }, { name: 'raw_days', selector: { number: { min: 1, max: 60, step: 1, mode: 'box', unit_of_measurement: this._l === 'de' ? 'Tage' : 'days' } } }, { name: 'start_date', selector: { date: {} } },
+        { name: 'show_regulation', selector: BOOL }, { type: 'grid', name: '', schema: [{ name: 'band_w', selector: { number: { min: 5, max: 500, step: 5, mode: 'box', unit_of_measurement: 'W' } } }, { name: 'jump_w', selector: { number: { min: 20, max: 2000, step: 10, mode: 'box', unit_of_measurement: 'W' } } }, { name: 'inverter_max_w', selector: { number: { min: 50, max: 20000, step: 50, mode: 'box', unit_of_measurement: 'W' } } }, { name: 'max_rate_s', selector: { number: { min: 0.5, max: 30, step: 0.5, mode: 'box', unit_of_measurement: 's' } } }] }, { name: 'show_cause', selector: BOOL }]));
+      s.push(sec('sec_anzeige', x.anzeige, 'mdi:palette-outline', [{ name: 'title', selector: { text: {} } }, { name: 'language', selector: { select: { mode: 'dropdown', options: [{ value: 'auto', label: 'Auto' }, { value: 'de', label: 'Deutsch' }, { value: 'en', label: 'English' }] } } }]));
+      return s;
+    }
     if (c.show_gas !== false) s.push(sec('sec_gas', x.gas, 'mdi:fire', [{ name: 'gas_energy', selector: ENT }, { name: 'gas_rate', selector: ENT }]));
     if (c.show_water !== false) s.push(sec('sec_wasser', x.wasser, 'mdi:water-outline', [{ name: 'water_energy', selector: ENT }, { name: 'water_rate', selector: ENT }]));
     const shape = this._l === 'de' ? [{ value: 'free', label: 'frei (freigestellt)' }, { value: 'circle', label: 'rund (Foto)' }] : [{ value: 'free', label: 'free (cut-out)' }, { value: 'circle', label: 'circle (photo)' }];
@@ -974,6 +1000,7 @@ class EnergieDashboardCardEditor extends HTMLElement {
     if (strings.length) n.solar_strings = strings; else delete n.solar_strings;
     // Standardwerte und leere Felder nicht in die YAML schreiben
     for (const [k, d] of Object.entries(DEFAULTS)) if (n[k] === d) delete n[k];
+    if (this._auswertung) { for (const [k, d] of Object.entries(A_DEFAULTS)) if (n[k] === d) delete n[k]; for (const k of ['show_gas', 'show_water', 'image', 'image_shape', 'image_size', 'image_x', 'image_y', 'dashboard_link', 'dashboard_link_text', 'max_width', 'solar_max', 'grid_max']) delete n[k]; for (const k of Object.keys(n)) if (k.startsWith('anchor_')) delete n[k]; }
     for (const k of Object.keys(n)) if (n[k] === '' || n[k] === undefined || n[k] === null) delete n[k];
     delete n._detected;
     this._melde({ type: this._config.type, ...n });
@@ -1000,7 +1027,7 @@ class EnergieDashboardCardEditor extends HTMLElement {
     }
     el.innerHTML = h;
     el.querySelector('#erk').onclick = () => this._erkennen();
-    const u = el.querySelector('#ueb'); if (u) u.onclick = () => { const n = { ...this._config, ...v.config }; this._vorschlag = null; this._hinweisNeu = false; this._melde(n); this._einrichtung(); };
+    const u = el.querySelector('#ueb'); if (u) u.onclick = () => { const n = { ...this._config, ...v.config }; if (this._auswertung) for (const k of ['show_gas', 'show_water', 'gas_energy', 'gas_rate', 'water_energy', 'water_rate']) delete n[k]; this._vorschlag = null; this._hinweisNeu = false; this._melde(n); this._einrichtung(); };
     const w = el.querySelector('#verw'); if (w) w.onclick = () => { this._vorschlag = null; this._einrichtung(); };
   }
   async _statMeta(ids) {
@@ -1011,7 +1038,8 @@ class EnergieDashboardCardEditor extends HTMLElement {
   async _pruefliste() {
     const el = this._root && this._root.getElementById('pruef'); if (!el || !this._hass) return;
     const c = { ...DEFAULTS, ...this._config }, X = this._x, L = FELD[this._l], h = this._hass, F = format(this._l);
-    const zeilen = prueflisteZeilen(c);
+    const zeilen = prueflisteZeilen(this._auswertung ? { ...c, show_gas: false, show_water: false } : c);
+    if (this._auswertung && c.output_power) zeilen.push(['output_power', 'o']);
     const energieIds = zeilen.filter(([k]) => ['energy', 'gas', 'volume'].includes(SENSOREN[k]) && c[k]).map(([k]) => c[k]);
     const meta = energieIds.length ? await this._statMeta(energieIds) : new Set();
     const rows = zeilen.map(([k, stufe]) => {
@@ -1030,6 +1058,10 @@ class EnergieDashboardCardEditor extends HTMLElement {
   }
   async _bildbox() {
     const el = this._root && this._root.getElementById('bildbox'); if (!el) return; const X = this._x;
+    if (this._auswertung) { if (el.dataset.fertig) return; el.dataset.fertig = 1;
+      el.innerHTML = `<h3>${esc(X.gespeichert)}</h3><p>${esc(X.gespeichertText)}</p><div class="reihe"><button class="knopf zweit" id="loesch">${esc(X.loeschen)}</button></div><div class="st" id="lst"></div>`;
+      el.querySelector('#loesch').onclick = async () => { if (!confirm(X.loeschenFrage)) return; const st = el.querySelector('#lst'); try { await this._hass.callWS({ type: 'recorder/clear_statistics', statistic_ids: A_IDS }); st.textContent = X.geloescht; } catch (e) { st.textContent = X.hochFehler + ' ' + (e.message || e.code || e); } };
+      return; }
     if (!el.dataset.fertig) {
       el.dataset.fertig = 1;
       el.innerHTML = `<h3>${esc(this._x.sec.bild)}</h3><p>${esc(X.bildTipp)}</p><div class="reihe"><label class="knopf" tabindex="0">${esc(X.hochladen)}<input type="file" accept="image/*" id="datei" hidden></label><button class="knopf zweit" id="bsp">${esc(X.beispiel)}</button></div><div class="reihe"><select id="medien"><option value="">${esc(X.ausMedien)}</option></select></div><div class="st" id="bst"></div>`;
@@ -1059,8 +1091,551 @@ class EnergieDashboardCardEditor extends HTMLElement {
     } catch (e) { st.textContent = X.hochFehler + ' ' + (e.message || e); }
   }
 }
+// ===================== Zweite Karte: Energie Auswertung (Pro) =====================
+// Schreibt nur mit store_statistics: true eigene Langzeitwerte (energie_auswertung:*) ueber recorder/import_statistics.
+const A_QUELLE = 'energie_auswertung';
+const A_DEFAULTS = { store_statistics: false, raw_days: 10, start_date: '', band_w: 50, jump_w: 120, show_regulation: true, output_power: '', inverter_max_w: 800, show_cause: false, max_rate_s: 2.5 };
+const A_STAND = 3; // Version der gespeicherten Tagesauswertung
+const A_STATS = { aktiv_h: 'h', band_pct: '%', reaktion_s: 's', ausregel_s: 's', ereignisse: 'Stk', tiefste_w: 'W', laengste_s: 's', anz_spitzen: 'Stk', stand: 'Stk' };
+const A_STUNDE = { spitze_w: 'W', spitze_s: 's', sprung_w: 'W', sprung_s: 's' };
+const A_IDS = [...Object.keys(A_STATS), ...Object.keys(A_STUNDE)].map(k => `${A_QUELLE}:${k}`);
+const A_FARBE = { netz: '#5db2ff', ac: '#2fd08f', haus: '#ffb020', rein: '#b69cff', raus: '#ff8a5c', einsp: '#d55181' };
+const TXT_A = {
+  de: {
+    titel: 'Energie Auswertung', sub: 'Wie gut der Akku deinen Stromverbrauch ausregelt und was trotzdem ins Netz geht.', subOhne: 'Was ins Netz geht und wie Netz und Haus verlaufen.',
+    einsp: 'Trotzdem eingespeist', einspOhne: 'Eingespeist', heute: 'Heute', woche: 'Diese Woche', monat: 'Dieser Monat', seitMn: 'seit Mitternacht', seit: 'seit',
+    akku: 'Akku: rein und raus', reinRaus: 'rein / raus', verlust: 'Verlust', vonRein: 'von rein',
+    verlustText: 'Verlust = Akku rein − Akku raus − Änderung des Akku-Inhalts, aus denselben Zählern wie in der Hauptkarte. Der Prozentwert bezieht sich auf „rein“. Er enthält auch den Eigenverbrauch des Geräts; bei kleinen Tageswerten schwankt er, weil der Inhalt meist in 1-%-Schritten gemeldet wird.',
+    verlauf: 'Netz, Akku und Haus', verlaufOhne: 'Netz und Haus', tagWaehlen: 'Tag wählen', zurueck: 'Einen Tag zurück', vor: 'Einen Tag vor',
+    f15: '15 Min', f1: '1 Std', f6: '6 Std', fH: 'Heute', fW: 'Woche', fM: 'Monat',
+    netz: 'Netz', ac: 'Akku-Ausgang', haus: 'Haus', rein: 'Akku rein', raus: 'Akku raus', reinraus: 'Akku rein / raus', unterNull: 'Einspeisung (unter null)', zurueckRaus: 'raus',
+    hRoh: 'Jede Linie zeigt den tiefsten und höchsten Wert je Abschnitt, keine Spitze geht verloren. Rot ist Einspeisung. Hinweise: oben Lastsprung und Zeit bis ausgeregelt (grau: Akku ging nicht mit), unten Einspeisung und Dauer.',
+    hStat: 'Pro Stunde: Die Netzlinie zeigt tiefsten und höchsten Wert, die anderen Linien den Mittelwert.', hStatGesp: ' Hinweise: stärkste Spitze und stärkster gewerteter Lastsprung je Stunde aus den gespeicherten Auswertungen.',
+    hTag: '{d}, ganzer Tag. Tippe unten auf eine Spitze, dann siehst du sie sekundengenau.', hAlt: 'Für den {d} hat HA keine Sekundenwerte mehr. Du siehst Stundenwerte.', hZoom: 'Ausschnitt um {t} Uhr, sekundengenau. Mit den Tasten oben geht es zurück.',
+    lade: 'Lade …', fehler: 'Konnte nicht geladen werden.',
+    regel: 'Wie schnell wird geregelt?', rB: 'Reaktion beginnt nach', rF: 'Ausgeregelt nach', rQ: 'Netz innerhalb ±{b} W', rE: 'Takt Netz-Sensor', rT: 'Tiefste Einspeisung', rL: 'Längste Einspeisung',
+    gewertet: '{n} Lastsprünge gewertet', gewertet1: '1 Lastsprung gewertet', keinSprung: 'kein gewerteter Sprung', nichtFertig: '{n} × nicht in 2 Min', kurz: '{n} kurze Spitzen nicht gewertet', waehrend: 'während {h} h Akku-Betrieb', akkuNicht: 'Akku hat nicht geliefert',
+    taktS: 'neuer Netzwert in HA; Akku etwa alle {a} s', keine: 'keine', nichtsUnter: 'nichts unter −{b} W', um: 'um {t}', spitzenZus: '{n} Spitzen, zusammen {s} s',
+    zuLangsam: 'Der Netz-Sensor liefert nur etwa alle {t} s einen Wert. Reaktions- und Ausregelzeiten brauchen etwa einen Wert pro Sekunde und werden deshalb nicht angezeigt.',
+    lastspr: 'Lastsprünge im Akku-Betrieb', spitzen: 'Einspeise-Spitzen', uhr: 'Uhrzeit', sprung: 'Sprung', reaktion: 'Reaktion', ausgeregelt: 'Ausgeregelt', akkuSp: 'Akku', tiefster: 'Tiefster Wert', dauer: 'Dauer', eingespeist: 'Eingespeist', vermutlich: 'Vermutlich',
+    gingMit: 'ging mit', gingNicht: 'ging nicht mit', nichtIn2: 'nicht in 2 Min', keinLs: 'kein Lastsprung im Akku-Betrieb.', keineEin: 'keine Einspeisung unter −{b} W.', keineSek: 'Für diesen Tag keine Sekundenwerte.',
+    lsText: 'Spitzen, während der Akku nichts liefert, stehen hier nicht: Dann regelt nichts, also gibt es keine Zeit zu messen. „Ging nicht mit“ heißt meist, dass das Gerät von selbst wieder ausging.',
+    spText: 'Dauer: so lange ging Strom ins Netz, bis die Regelung es abgefangen hat. Tippe auf eine Zeile, dann springt das Diagramm zu dieser Stelle. Gezählt wird alles unter −{b} W.',
+    artStart: 'Akku-Start', artWeg: 'Last weg', artSchw: 'Schwankung',
+    tage: 'Tagesverlauf', wischen: 'Mehr Spalten: Tabelle seitlich wischen.', tag: 'Tag', aktiv: 'Akku aktiv', innerhalb: 'innerhalb ±{b} W', tiefste: 'Tiefste', laengste: 'Längste', anz: 'Spitzen', nochKeine: 'Noch keine Tageswerte.',
+    tabText: 'Reaktion: bis das Netz nach einem Lastsprung um 20 % fällt. Ausgeregelt: bis es 5 Sekunden innerhalb von ±{b} W bleibt. Tippe auf einen Tag, dann zeigt ihn das Diagramm.',
+    speichernAn: 'Speichern ist eingeschaltet: Abgeschlossene Tage werden beim Öffnen der Karte ausgewertet und in Home Assistant als energie_auswertung:* gespeichert. Das geht nur für Tage, für die HA noch Sekundenwerte hat (etwa {r} Tage). Wird die Karte länger nicht geöffnet, fehlen diese Tage.',
+    speichernAus: 'Speichern ist ausgeschaltet: Regelwerte vergangener Tage gibt es nur, solange Home Assistant ihre Sekundenwerte hat (etwa {r} Tage). Dauerhaft speichern lässt sich die Auswertung im Karteneditor einschalten.',
+    keinAkku: 'Ohne Akku gibt es keine Regelung zu bewerten. Einspeisung und Verlauf werden trotzdem gezeigt.',
+    willkommen: 'Die Auswertung ist noch nicht eingerichtet. Karte bearbeiten und „Sensoren automatisch erkennen“ wählen.',
+    netzRaus: 'raus', alt: 'Ältere Tage', speichert: 'Speichere {d} …', weitere: '… und {n} ältere. Im Diagramm (Heute) sind alle markiert.',
+  },
+  en: {
+    titel: 'Energy analysis', sub: 'How well the battery balances your consumption and what still goes to the grid.', subOhne: 'What goes to the grid and how grid and home develop.',
+    einsp: 'Still exported', einspOhne: 'Exported', heute: 'Today', woche: 'This week', monat: 'This month', seitMn: 'since midnight', seit: 'since',
+    akku: 'Battery: in and out', reinRaus: 'in / out', verlust: 'Loss', vonRein: 'of in',
+    verlustText: 'Loss = battery in − battery out − change of stored energy, from the same meters as the main card. The percentage is relative to “in”. It includes the device’s own consumption; small daily values fluctuate because the content is usually reported in 1 % steps.',
+    verlauf: 'Grid, battery and home', verlaufOhne: 'Grid and home', tagWaehlen: 'Choose day', zurueck: 'One day back', vor: 'One day forward',
+    f15: '15 min', f1: '1 h', f6: '6 h', fH: 'Today', fW: 'Week', fM: 'Month',
+    netz: 'Grid', ac: 'Battery output', haus: 'Home', rein: 'Battery in', raus: 'Battery out', reinraus: 'Battery in / out', unterNull: 'Export (below zero)', zurueckRaus: 'out',
+    hRoh: 'Each line shows the lowest and highest value per segment, no peak gets lost. Red is export. Labels: above load step and time until settled (grey: battery did not follow), below export and duration.',
+    hStat: 'Per hour: the grid line shows lowest and highest value, the other lines the mean.', hStatGesp: ' Labels: strongest peak and strongest rated load step per hour from the stored analysis.',
+    hTag: '{d}, whole day. Tap a peak below to see it second by second.', hAlt: 'Home Assistant no longer has second values for {d}. You see hourly values.', hZoom: 'Detail around {t}, second by second. Use the buttons above to go back.',
+    lade: 'Loading …', fehler: 'Could not be loaded.',
+    regel: 'How fast is it regulated?', rB: 'Reaction starts after', rF: 'Settled after', rQ: 'Grid within ±{b} W', rE: 'Grid sensor rate', rT: 'Lowest export', rL: 'Longest export',
+    gewertet: '{n} load steps rated', gewertet1: '1 load step rated', keinSprung: 'no rated step', nichtFertig: '{n} × not within 2 min', kurz: '{n} short peaks not rated', waehrend: 'during {h} h battery operation', akkuNicht: 'battery did not deliver',
+    taktS: 'new grid value in HA; battery about every {a} s', keine: 'none', nichtsUnter: 'nothing below −{b} W', um: 'at {t}', spitzenZus: '{n} peaks, {s} s in total',
+    zuLangsam: 'The grid sensor only reports about every {t} s. Reaction and settling times need about one value per second and are therefore not shown.',
+    lastspr: 'Load steps during battery operation', spitzen: 'Export peaks', uhr: 'Time', sprung: 'Step', reaktion: 'Reaction', ausgeregelt: 'Settled', akkuSp: 'Battery', tiefster: 'Lowest', dauer: 'Duration', eingespeist: 'Exported', vermutlich: 'Probably',
+    gingMit: 'followed', gingNicht: 'did not follow', nichtIn2: 'not within 2 min', keinLs: 'no load step during battery operation.', keineEin: 'no export below −{b} W.', keineSek: 'No second values for this day.',
+    lsText: 'Peaks while the battery delivers nothing are not listed: nothing regulates then, so there is no time to measure. “Did not follow” usually means the appliance switched off by itself.',
+    spText: 'Duration: how long power went to the grid until regulation caught it. Tap a row to jump the chart there. Everything below −{b} W counts.',
+    artStart: 'battery start', artWeg: 'load dropped', artSchw: 'fluctuation',
+    tage: 'Daily overview', wischen: 'More columns: swipe the table sideways.', tag: 'Day', aktiv: 'Battery active', innerhalb: 'within ±{b} W', tiefste: 'Lowest', laengste: 'Longest', anz: 'Peaks', nochKeine: 'No daily values yet.',
+    tabText: 'Reaction: until the grid drops by 20 % after a load step. Settled: until it stays within ±{b} W for 5 seconds. Tap a day to show it in the chart.',
+    speichernAn: 'Saving is on: completed days are analysed when the card is opened and stored in Home Assistant as energie_auswertung:*. This only works for days Home Assistant still has second values for (about {r} days). If the card is not opened for longer, those days are missing.',
+    speichernAus: 'Saving is off: regulation values of past days are only available while Home Assistant keeps their second values (about {r} days). Permanent saving can be turned on in the card editor.',
+    keinAkku: 'Without a battery there is no regulation to rate. Export and history are still shown.',
+    willkommen: 'The analysis is not set up yet. Edit the card and choose “Detect sensors automatically”.',
+    netzRaus: 'out', alt: 'Older days', speichert: 'Saving {d} …', weitere: '… and {n} older ones. All are marked in the chart (Today).',
+  },
+};
+const tpl = (s, o) => String(s).replace(/\{(\w+)\}/g, (_, k) => o[k] ?? '');
+const median = a => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+const montag = () => { const x = mitternacht(); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x; };
+const monatsanfang = () => { const x = mitternacht(); x.setDate(1); return x; };
+// Sekundenraster: letzter bekannter Wert gilt weiter
+function raster(a, von, n) { const o = new Array(n).fill(null); let i = 0, cur = null; for (let s = 0; s < n; s++) { const t = von + s; while (i < a.length && a[i][0] <= t) { cur = a[i][1]; i++; } o[s] = cur; } return o; }
+// Mehrere Reihen zu einer verknuepfen (Stufenfunktion): fn bekommt die jeweils letzten Werte
+function verknuepfe(reihen, fn) {
+  const ts = [...new Set(reihen.flatMap(r => r.map(p => p[0])))].sort((a, b) => a - b), idx = reihen.map(() => 0), cur = reihen.map(() => null), o = [];
+  for (const t of ts) { reihen.forEach((r, k) => { while (idx[k] < r.length && r[idx[k]][0] <= t) { cur[k] = r[idx[k]][1]; idx[k]++; } }); const v = fn(cur); o.push([t, v === undefined ? null : v]); }
+  return o;
+}
+const taktVon = (a, von) => { const d = []; for (let i = 1; i < a.length; i++) if (a[i][1] !== null && a[i - 1][1] !== null && a[i][0] >= von) d.push(a[i][0] - a[i - 1][0]); return median(d); };
+// Jede Einspeisung unter -band aus den Rohwerten: Beginn, tiefster Wert, Dauer, vermutliche Art
+function einspeiseSpitzen(netz, ac, von, bis, band) {
+  const o = []; let cur = null, vorher = null, ai = 0, av = null;
+  const acBei = t => { while (ai < ac.length && ac[ai][0] <= t) { av = ac[ai][1]; ai++; } return av; };
+  for (let i = 0; i < netz.length; i++) {
+    const [t, v] = netz[i]; if (t < von || t > bis || v === null) continue;
+    if (cur) { const dt = Math.min(t - cur.ende, 120); if (cur.letzt < 0) cur.wh += -cur.letzt * dt / 3600; }
+    if (v < -band) { if (!cur) cur = { t, tief: v, vorher, a: acBei(t), ende: t, wh: 0, letzt: v }; if (v < cur.tief) cur.tief = v; cur.ende = t; cur.letzt = v; }
+    else if (cur) { cur.dauer = t - cur.t; o.push(cur); cur = null; }
+    vorher = v;
+  }
+  if (cur) { cur.dauer = bis - cur.t; cur.laeuft = true; o.push(cur); }
+  for (const e of o) e.art = e.a === null || e.a === undefined || e.a <= 5 ? 'artStart' : e.vorher !== null && e.vorher - e.tief >= 300 ? 'artWeg' : 'artSchw';
+  return o;
+}
+// Regelverhalten aus Sekundenwerten. Gewertet wird ein Lastsprung nur, wenn der Akku-Ausgang mitgeht.
+function auswerten(netz, ac, von, bis, op) {
+  const BAND = op.band, SPRUNG = op.sprung; von = Math.floor(von); bis = Math.floor(bis); const n = Math.max(bis - von, 0);
+  const res = { ein: [], aktiv_s: 0, imBand: 0, reaktion: [], ausregel: [], gewertet: 0, spitzen: 0, nichtFertig: 0, liste: [], takt: taktVon(netz, von), taktA: taktVon(ac, von) };
+  if (n < 10) return res;
+  const G = raster(netz, von, n), A = raster(ac, von, n);
+  for (let s = 0; s < n; s++) if (A[s] !== null && A[s] > 5 && G[s] !== null) { res.aktiv_s++; if (Math.abs(G[s]) <= BAND) res.imBand++; }
+  res.ein = einspeiseSpitzen(netz, ac, von, bis, BAND);
+  res.schnell = res.takt !== null && res.takt <= op.maxTakt;
+  if (!res.schnell) return res; // zu langsamer Sensor: keine erfundenen Reaktionszeiten
+  const fenster = clamp(Math.round((res.taktA || 20) * 2.25), 10, 90);
+  let letzt = -999;
+  for (let s = 10; s < n - 130; s++) {
+    if (s - letzt <= 60 || G[s] === null || G[s - 3] === null || !(A[s] > 5) || !(A[s - 3] > 5)) continue;
+    const sp = G[s] - G[s - 3];
+    if (Math.abs(sp) < SPRUNG || Math.abs(G[s - 3]) > BAND * 1.6) continue;
+    const vz = sp > 0 ? 1 : -1; let pk = 0, tp = 0;
+    for (let k = 0; k <= 6; k++) { const v = (G[s + k] ?? 0) * vz; if (v > pk) { pk = v; tp = k; } }
+    if (pk < SPRUNG * .8) continue;
+    letzt = s;
+    const a0 = A[s - 3] ?? 0, frei = vz > 0 ? Math.max(op.maxW - a0, 0) : a0; let am = 0;
+    for (let k = 5; k <= fenster; k++) { const d = ((A[s + k] ?? a0) - a0) * vz; if (d > am) am = d; }
+    const kurz = am < Math.min(pk, frei) * .4;
+    let begin = null, fertig = null;
+    for (let k = tp; k <= 120; k++) { if (begin === null && (G[s + k] ?? pk) * vz <= pk * .8) begin = k; let ok = true; for (let j = 0; j < 5; j++) { const v = G[s + k + j]; if (v === null || v === undefined || Math.abs(v) > BAND) { ok = false; break; } } if (ok) { fertig = k; break; } }
+    res.liste.push({ t: von + s, pk, begin, fertig, vz, kurz });
+    if (kurz) { res.spitzen++; continue; }
+    res.gewertet++; if (begin !== null) res.reaktion.push(begin); if (fertig !== null) res.ausregel.push(fertig); else res.nichtFertig++;
+  }
+  return res;
+}
+const CSS_A = `
+:host{display:block}
+.w{--ink:#eef3f8;--mut:#a7b6c5;--wei:#172232;--lin:rgba(255,255,255,.1);background:radial-gradient(120% 70% at 50% 0,#1c2a3c 0,#141e2c 60%,#0f1723 100%);color:var(--ink);border-radius:18px;padding:clamp(10px,2cqw,18px);margin:0 auto;max-width:1040px;box-sizing:border-box;width:100%;border:1px solid rgba(255,255,255,.08);font-family:var(--ha-font-family-body,Roboto,system-ui,sans-serif);container-type:inline-size;font-variant-numeric:tabular-nums;display:flex;flex-direction:column;gap:12px}
+h1{margin:0;font-size:clamp(17px,3cqw,22px);font-weight:700;line-height:1.2}
+h2{margin:0;font-size:14px;font-weight:700}
+.sub{font-size:12px;color:var(--mut);margin:0;line-height:1.4;max-width:75ch}
+.bx{background:var(--wei);border:1px solid var(--lin);border-radius:13px;padding:12px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.k3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+@container (max-width:420px){.k3{grid-template-columns:1fr}}
+.kp{background:rgba(255,255,255,.05);border-radius:10px;padding:9px 10px;min-width:0;display:flex;flex-direction:column;gap:2px}
+.kp span{font-size:12px;color:var(--mut)}
+.kp b{font-size:clamp(17px,3.6cqw,24px);font-weight:800;line-height:1.15;overflow-wrap:anywhere}
+.kp small{font-size:11px;color:var(--mut);line-height:1.25}
+.k5{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@container (min-width:640px){.k5{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.ko{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;justify-content:space-between}
+.tabs{display:flex;flex-wrap:wrap;gap:3px}
+.tabs button{all:unset;cursor:pointer;font-size:12px;padding:4px 9px;border-radius:7px;color:var(--mut)}
+.tabs button[aria-pressed=true]{background:#e7eef5;color:#101a2e}
+.tabs button:focus-visible{outline:2px solid #5db2ff;outline-offset:1px}
+.kal{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.kal label{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--mut)}
+.kal input{color-scheme:dark;background:#0f1826;color:var(--ink);border:1px solid var(--lin);border-radius:8px;padding:5px 8px;font:inherit;font-size:13px;min-height:30px}
+.kal button{all:unset;cursor:pointer;width:32px;height:32px;line-height:30px;text-align:center;font-size:20px;border-radius:8px;background:rgba(255,255,255,.07);color:var(--ink)}
+.kal button[disabled]{opacity:.3;cursor:default}
+.kal input:focus-visible,.kal button:focus-visible{outline:2px solid #5db2ff;outline-offset:1px}
+tr[data-z],tr[data-t]{cursor:pointer}
+tr[data-z]:hover td,tr[data-t]:hover td{background:rgba(255,255,255,.06)}
+tr[data-z]:focus-visible,tr[data-t]:focus-visible{outline:2px solid #5db2ff;outline-offset:-2px}
+.leg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--mut)}
+.leg span{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.leg i{width:14px;height:3px;border-radius:2px;display:block}
+.leg i.fl{height:9px;width:9px;border-radius:2px}
+.leg em{font-style:normal;color:var(--ink);font-weight:600}
+.ch{position:relative;touch-action:pan-y;min-height:220px}
+.ch svg{display:block;width:100%}
+.ch text{font-size:10.5px;fill:var(--mut)}
+.mk{pointer-events:none}
+.tip{position:absolute;top:4px;pointer-events:none;background:#0a111c;border:1px solid var(--lin);border-radius:8px;padding:7px 9px;font-size:12px;line-height:1.5;display:none;z-index:2;white-space:nowrap;box-shadow:0 5px 16px rgba(0,0,0,.5)}
+.tip b{display:block}
+.tip span{display:flex;justify-content:space-between;gap:14px;color:var(--mut)}
+.tip em{font-style:normal;color:var(--ink);font-weight:700}
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+table.gross{min-width:640px}
+th{color:var(--mut);font-weight:600;text-align:right;padding:5px 7px;border-bottom:1px solid var(--lin);white-space:nowrap}
+td{text-align:right;padding:5px 7px;border-bottom:1px solid rgba(255,255,255,.05);white-space:nowrap}
+th:first-child,td:first-child{text-align:left;position:sticky;left:0;background:#172232;z-index:1}
+.tip2{display:none}
+@container (max-width:700px){.tip2{display:block}}
+.lade{font-size:12px;color:var(--mut)}
+.hin{font-size:12px;color:#ffb38a;margin:0;line-height:1.4}
+.info{font-size:12px;color:var(--mut);margin:0;line-height:1.4;border-left:3px solid #5db2ff;padding-left:8px}
+[hidden]{display:none!important}
+`;
+class EnergieDashboardAuswertungCard extends HTMLElement {
+  static getConfigElement() { return document.createElement('energie-dashboard-card-editor'); }
+  static async getStubConfig(hass) { try { const r = await sensorenErkennen(hass); const c = { ...r.config }; delete c.show_gas; delete c.show_water; for (const k of ['gas_energy', 'gas_rate', 'water_energy', 'water_rate']) delete c[k]; return c; } catch (e) { return {}; } }
+  setConfig(c) {
+    if (!c || typeof c !== 'object') throw new Error('Invalid configuration');
+    this._c = { ...DEFAULTS, ...A_DEFAULTS, ...c, show_gas: false, show_water: false }; this._an = teileAn(this._c);
+    this._regel = this._an.akku && this._c.show_regulation !== false;
+    this._d = null; this._tag = null; this._lokal = {}; this._stat = null; this._gestartet = false;
+    if (this._hass) this._lang = sprache(this._c, this._hass);
+    this._bau(); if (this._hass) this._start();
+  }
+  getCardSize() { return 16; }
+  getGridOptions() { return { columns: 'full' }; }
+  connectedCallback() {
+    this._t1 = setInterval(() => { this._zeichne(); this._zeigeTages(); }, 10000);
+    this._t2 = setInterval(() => { if (this._hass && eingerichtet(this._c)) { if (!this._tag) this._ladeHeute(); this._ladeEnergie(); } }, 300000);
+    if (!this._ro) this._ro = new ResizeObserver(() => { this._zeichne(); this._balken(); });
+    if (this._e && this._e('ch')) { this._ro.observe(this._e('ch')); this._ro.observe(this._e('ba')); }
+  }
+  disconnectedCallback() { clearInterval(this._t1); clearInterval(this._t2); if (this._ro) this._ro.disconnect(); }
+  get _T() { return TXT_A[this._lang || 'de']; }
+  get _F() { return this._fmt || (this._fmt = format(this._lang || 'de')); }
+  _op() { const c = this._c; return { band: +c.band_w || 50, sprung: +c.jump_w || 120, maxW: +c.inverter_max_w || 800, maxTakt: +c.max_rate_s || 2.5 }; }
+  _seit() { const c = this._c; if (c.start_date) { const [y, m, d] = String(c.start_date).split('-').map(Number); if (y && m && d) return new Date(y, m - 1, d).getTime() / 1000; } const x = mitternacht(); x.setDate(x.getDate() - 30); return x.getTime() / 1000; }
+  _bau() {
+    const c = this._c, T = this._T, an = this._an, R = this._regel, b = this._op().band;
+    if (!this.shadowRoot) this.attachShadow({ mode: 'open' });
+    this._e = id => this.shadowRoot.getElementById(id);
+    if (!eingerichtet(c)) { this.shadowRoot.innerHTML = `<style>${CSS_A}</style><div class="w"><h1>${esc(c.title || T.titel)}</h1><p class="sub">${esc(T.willkommen)}</p></div>`; return; }
+    const kp = (id, n) => `<div class="kp"><span>${esc(n)}</span><b id="${id}">–</b><small id="${id}s"></small></div>`;
+    const fenster = this._fenster = [[T.f15, 900, 0], [T.f1, 3600, 0], [T.f6, 21600, 0], [T.fH, 0, 0], [T.fW, 7 * 86400, 1], [T.fM, 30 * 86400, 1]];
+    const leg = (f, n, id, fl) => `<span><i${fl ? ' class="fl"' : ''} style="background:${f}"></i>${esc(n)}${id ? ` <em id="${id}">–</em>` : ''}</span>`;
+    const spalten = [T.tag, ...(an.akku ? [T.rein, T.raus, T.verlust] : []), T.eingespeist, ...(R ? [T.aktiv, tpl(T.innerhalb, { b }), T.reaktion, T.ausgeregelt, T.tiefste, T.laengste, T.anz] : [])];
+    this._spalten = spalten.length;
+    this.shadowRoot.innerHTML = `<style>${CSS_A}</style><div class="w"><div><h1>${esc(c.title || T.titel)}</h1><p class="sub">${esc(an.akku ? T.sub : T.subOhne)}</p></div>
+      <section class="bx"><h2>${esc(an.akku ? T.einsp : T.einspOhne)}</h2><div class="k3">${kp('e_t', T.heute)}${kp('e_w', T.woche)}${kp('e_m', T.monat)}</div>
+        <div class="ch" id="ba" style="min-height:120px"><svg id="bs" role="img" aria-label="${esc(T.eingespeist)}"></svg><div class="tip" id="bt"></div></div></section>
+      ${an.akku ? `<section class="bx"><h2>${esc(T.akku)}</h2><div class="k3">${kp('a_t', T.heute)}${kp('a_w', T.woche)}${kp('a_m', T.monat)}</div><p class="sub">${esc(T.verlustText)}</p></section>` : ''}
+      <section class="bx"><div class="ko"><h2>${esc(an.akku ? T.verlauf : T.verlaufOhne)}</h2><div class="tabs" id="tabs">${fenster.map(([n], i) => `<button type="button" data-i="${i}" aria-pressed="${i === 1}">${esc(n)}</button>`).join('')}</div></div>
+        <div class="kal"><button type="button" id="k_v" aria-label="${esc(T.zurueck)}">‹</button><label><span>${esc(T.tagWaehlen)}</span><input type="date" id="k_d"></label><button type="button" id="k_n" aria-label="${esc(T.vor)}" disabled>›</button></div>
+        <div class="ch" id="ch"><svg id="sv" role="img" aria-label="${esc(T.verlauf)}"></svg><div class="tip" id="tip"></div></div>
+        <div class="leg">${leg(A_FARBE.netz, T.netz, 'l_n')}${an.akku ? leg(A_FARBE.ac, T.ac, 'l_a') : ''}${leg(A_FARBE.haus, T.haus, 'l_h')}${an.akku ? leg(A_FARBE.rein, T.rein, 'l_r') + leg(A_FARBE.raus, T.raus, 'l_u') : ''}${leg(A_FARBE.einsp, T.unterNull, null, true)}</div>
+        <p class="sub" id="ch_h"></p></section>
+      <section class="bx">
+        ${R ? `<h2 id="t_r">${esc(T.regel)}</h2><p class="hin" id="r_slow" hidden></p><div class="k5">${kp('r_b', T.rB)}${kp('r_f', T.rF)}${kp('r_q', tpl(T.rQ, { b }))}${kp('r_e', T.rE)}${kp('r_t', T.rT)}${kp('r_l', T.rL)}</div>
+        <div id="ls_box"><h2 id="t_l">${esc(T.lastspr)}</h2><div class="tw"><table><thead><tr><th>${esc(T.uhr)}</th><th>${esc(T.sprung)}</th><th>${esc(T.reaktion)}</th><th>${esc(T.ausgeregelt)}</th><th>${esc(T.akkuSp)}</th></tr></thead><tbody id="ls"></tbody></table></div><p class="sub">${esc(T.lsText)}</p></div>
+        <h2 id="t_s">${esc(T.spitzen)}</h2><div class="tw"><table><thead><tr><th>${esc(T.uhr)}</th><th>${esc(T.tiefster)}</th><th>${esc(T.dauer)}</th><th>${esc(T.eingespeist)}</th>${c.show_cause ? `<th>${esc(T.vermutlich)}</th>` : ''}</tr></thead><tbody id="sp"></tbody></table></div>
+        <p class="sub">${esc(tpl(T.spText, { b }))}</p><p class="sub" id="r_h"></p>` : `<p class="info">${esc(an.akku ? '' : T.keinAkku)}</p>`}
+        <h2>${esc(T.tage)}</h2><p class="sub tip2">${esc(T.wischen)}</p><div class="tw"><table class="${spalten.length > 6 ? 'gross' : ''}"><thead><tr>${spalten.map(s => `<th>${esc(s)}</th>`).join('')}</tr></thead><tbody id="tb"></tbody></table></div>
+        <p class="sub">${esc(tpl(T.tabText, { b }))}</p>${R ? `<p class="info" id="st_h">${esc(tpl(c.store_statistics ? T.speichernAn : T.speichernAus, { r: +c.raw_days || 10 }))}</p>` : ''}</section></div>`;
+    this._fi = 1;
+    for (const id of ['sp', 'ls']) { const el = this._e(id); if (!el) continue; el.addEventListener('click', ev => { const r = ev.target.closest('tr[data-z]'); if (r) this._zoom(+r.dataset.z); }); el.addEventListener('keydown', ev => { const r = ev.target.closest && ev.target.closest('tr[data-z]'); if (r && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); this._zoom(+r.dataset.z); } }); }
+    const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    this._iso = iso; const kd = this._e('k_d'); kd.max = iso(new Date()); kd.value = iso(new Date());
+    kd.addEventListener('change', () => { if (!kd.value) return; const [y, m, d] = kd.value.split('-').map(Number); this._tagWahl(new Date(y, m - 1, d)); });
+    const schritt = n => { const d = this._tag ? new Date(this._tag) : mitternacht(); d.setDate(d.getDate() + n); this._tagWahl(d); };
+    this._e('k_v').addEventListener('click', () => schritt(-1)); this._e('k_n').addEventListener('click', () => schritt(1));
+    const tb = this._e('tb'), zeigeTag = ev => { const r = ev.target.closest && ev.target.closest('tr[data-t]'); if (r) { this._tagWahl(new Date(+r.dataset.t * 1000)); this._e('ch').scrollIntoView({ block: 'center', behavior: 'smooth' }); } };
+    tb.addEventListener('click', zeigeTag); tb.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); zeigeTag(ev); } });
+    this._e('tabs').addEventListener('click', ev => { const b2 = ev.target.closest('button'); if (!b2) return; this._fi = +b2.dataset.i; this._heuteAnsicht(); this.shadowRoot.querySelectorAll('#tabs button').forEach(x => x.setAttribute('aria-pressed', x === b2)); this._lade(); });
+    const ch = this._e('ch');
+    ch.addEventListener('pointermove', ev => { const r = ch.getBoundingClientRect(); this._hx = ev.clientX - r.left; this._zeichne(); });
+    ch.addEventListener('pointerleave', () => { this._hx = null; this._e('tip').style.display = 'none'; this._zeichne(); });
+    const ba = this._e('ba'); ba.addEventListener('pointermove', ev => this._bHover(ev)); ba.addEventListener('pointerleave', () => { this._e('bt').style.display = 'none'; });
+    if (this._ro) { this._ro.observe(ch); this._ro.observe(ba); }
+  }
+  set hass(h) {
+    this._hass = h; if (!this._c) return;
+    const l = sprache(this._c, h); if (l !== this._lang) { this._lang = l; this._fmt = format(l); this._bau(); this._gestartet = false; }
+    if (!eingerichtet(this._c)) return;
+    if (!this._gestartet) this._start();
+    this._live();
+  }
+  _start() { if (!this._hass || !eingerichtet(this._c) || !this._e('ch')) return; this._gestartet = true; this._lade(); this._ladeEnergie(); if (this._regel) { this._ladeHeute(); this._ladeTage(); } }
+  _ws(m) { return this._hass.callWS(m); }
+  // ---------- Sensoren als Reihen in W ----------
+  _rohIds() { const c = this._c, an = this._an; return [c.grid_power, c.grid_import_power, c.grid_export_power, an.solar && c.solar_power, an.akku && c.battery_power, an.akku && c.battery_charge_power, an.akku && c.battery_discharge_power, an.akku && c.output_power, c.home_power].filter(Boolean); }
+  _fak(id) { const s = this._hass.states[id], u = s && s.attributes.unit_of_measurement; return u in FAKTOR.power ? FAKTOR.power[u] : 1; }
+  // r: { id: [[t, v_W], ...] } -> { netz, ac, lad, ent, haus }
+  _reihen(r) {
+    const c = this._c, an = this._an, g = id => id ? (r[id] || []) : [];
+    const netz = c.grid_power ? g(c.grid_power).map(([t, v]) => [t, v === null ? null : c.grid_invert ? -v : v]) : verknuepfe([g(c.grid_import_power), g(c.grid_export_power)], ([i, e]) => i === null && e === null ? null : (i || 0) - (e || 0));
+    let lad = [], ent = [], bat = [];
+    if (an.akku) {
+      if (c.battery_power) { bat = g(c.battery_power).map(([t, v]) => [t, v === null ? null : c.battery_invert ? -v : v]); ent = bat.map(([t, v]) => [t, v === null ? null : Math.max(v, 0)]); lad = bat.map(([t, v]) => [t, v === null ? null : Math.max(-v, 0)]); }
+      else { lad = g(c.battery_charge_power); ent = g(c.battery_discharge_power); bat = verknuepfe([ent, lad], ([e, l]) => e === null && l === null ? null : (e || 0) - (l || 0)); }
+    }
+    const ac = an.akku ? (c.output_power ? g(c.output_power) : ent) : [];
+    const pv = an.solar ? g(c.solar_power) : [];
+    const haus = c.home_power ? g(c.home_power) : c.output_power ? verknuepfe([netz, ac], ([n, a]) => n === null || a === null ? null : Math.max(n + a, 0)) : verknuepfe([netz, pv, bat], ([n, p, b]) => n === null ? null : Math.max(n + (p || 0) + (b || 0), 0));
+    return { netz, ac, lad, ent, haus };
+  }
+  async _hist(von, bis) {
+    const ids = [...new Set(this._rohIds())];
+    const r = await this._ws({ type: 'history/history_during_period', start_time: new Date(von * 1000).toISOString(), end_time: new Date(bis * 1000).toISOString(), entity_ids: ids, minimal_response: true, no_attributes: true, significant_changes_only: false });
+    const o = {}; for (const id of ids) { const f = this._fak(id); o[id] = (r[id] || []).map(x => { const v = parseFloat(x.s); return [x.lu !== undefined ? x.lu : x.lc, Number.isFinite(v) ? v * f : null]; }); }
+    return this._reihen(o);
+  }
+  async _statReihen(von, bis) {
+    const ids = [...new Set(this._rohIds())];
+    const r = await this._ws({ type: 'recorder/statistics_during_period', start_time: new Date(von * 1000).toISOString(), end_time: new Date(bis * 1000).toISOString(), statistic_ids: ids, period: 'hour', types: ['mean', 'min', 'max'], units: { power: 'W' } });
+    const art = k => { const o = {}; for (const id of ids) o[id] = (r[id] || []).map(x => [ts(x.start) / 1000, istZahl(x[k]) ? x[k] : null]); return this._reihen(o); };
+    const m = art('mean'), lo = art('min'), hi = art('max'), c = this._c;
+    // Netz min/max: bei getrennten Sensoren angenaehert
+    let nLo = lo.netz, nHi = hi.netz;
+    if (!c.grid_power) { const imp = id => (r[id] || []).map(x => [ts(x.start) / 1000, x]); nLo = verknuepfe([imp(c.grid_import_power), imp(c.grid_export_power)], ([i, e]) => (i ? i.min : 0) - (e ? e.max : 0)); nHi = verknuepfe([imp(c.grid_import_power), imp(c.grid_export_power)], ([i, e]) => (i ? i.max : 0) - (e ? e.min : 0)); }
+    return { ...m, netzMin: c.grid_invert ? hi.netz : nLo, netzMax: c.grid_invert ? lo.netz : nHi };
+  }
+  // ---------- Energie aus Zaehlern (wie Hauptkarte) ----------
+  async _ladeEnergie() {
+    const c = this._c, an = this._an, m = mitternacht(), mon = monatsanfang(), wo = montag(), seit = new Date(Math.min(mon.getTime(), wo.getTime(), m.getTime() - 29 * 864e5));
+    const ids = [c.grid_export_energy, an.akku && c.battery_energy_in, an.akku && c.battery_energy_out, an.akku && (c.battery_content || c.battery_soc)].filter(Boolean);
+    if (!ids.length) return;
+    try {
+      this._eSt = await this._ws({ type: 'recorder/statistics_during_period', start_time: new Date(seit.getTime() - 3600e3).toISOString(), end_time: new Date().toISOString(), statistic_ids: [...new Set(ids)], period: 'hour', types: ['change', 'state', 'mean'], units: { energy: 'kWh' } });
+      this._eSeit = seit.getTime(); this._zeigeEnergie(); this._balken(); this._zeigeTages();
+    } catch (e) { console.warn('energie-dashboard-auswertung: energy', e); }
+  }
+  // Energie eines Zaehlers zwischen von und bis (ms); heute mit Live-Anteil wie in der Hauptkarte
+  _energie(key, von, bis) {
+    const id = this._c[key]; if (!id || !this._eSt) return null; const rows = this._eSt[id] || [], jetzt = Date.now();
+    if (bis <= jetzt) return summeChange(rows, von, bis);
+    const vorher = von < mitternacht().getTime() ? summeChange(rows, von, mitternacht().getTime()) || 0 : 0;
+    const heute = tagesWert(rows.filter(z => ts(z.start) >= mitternacht().getTime() - 3600e3), wert(this._hass, id, 'energy'), mitternacht().getTime());
+    return heute === null ? (rows.length ? vorher : null) : vorher + heute;
+  }
+  _inhalt(t) { // Akku-Inhalt in kWh zu Beginn der Stunde t (ms), aus dem Stundenmittel davor; t = jetzt: live
+    const c = this._c, id = c.battery_content || c.battery_soc; if (!id) return null;
+    const umr = v => c.battery_content ? v : (+c.battery_capacity ? v / 100 * c.battery_capacity : null);
+    if (t >= Date.now() - 60e3) { const v = wert(this._hass, id, c.battery_content ? 'energy' : 'soc'); return istZahl(v) ? umr(v) : null; }
+    const a = ((this._eSt || {})[id] || []).filter(z => ts(z.start) < t && istZahl(z.mean)); return a.length ? umr(a[a.length - 1].mean) : null;
+  }
+  _bilanz(von, bis) { const rein = this._energie('battery_energy_in', von, bis), raus = this._energie('battery_energy_out', von, bis), k0 = this._inhalt(von), k1 = this._inhalt(Math.min(bis, Date.now())); return { rein, raus, verlust: verlust(rein, raus, k0, k1) }; }
+  _vText(x) { const F = this._F; if (!x || !istZahl(x.verlust)) return '–'; return F.whk(x.verlust) + (x.rein >= 0.05 ? ` (${F.zahl(Math.min(x.verlust / x.rein * 100, 100), 0)} % ${this._T.vonRein})` : ''); }
+  _zeigeEnergie() {
+    if (!this._eSt) return; const F = this._F, T = this._T, j = Date.now() + 1, perioden = [['t', mitternacht()], ['w', montag()], ['m', monatsanfang()]];
+    for (const [k, d] of perioden) {
+      const e = this._energie('grid_export_energy', d.getTime(), j); this._txt('e_' + k, F.whk(e)); this._txt('e_' + k + 's', k === 't' ? T.seitMn : T.seit + ' ' + F.datum(d));
+      if (this._an.akku) { const x = this._bilanz(d.getTime(), j); this._txt('a_' + k, `${F.whk(x.rein)} / ${F.whk(x.raus)}`); this._txt('a_' + k + 's', `${T.reinRaus} · ${T.verlust} ${this._vText(x)}`); }
+    }
+  }
+  _tageListe() { const o = [], h = mitternacht(); for (let i = 29; i >= 0; i--) { const d = new Date(h); d.setDate(d.getDate() - i); o.push(d); } return o; }
+  _balken() {
+    if (!this._eSt || !this._e || !this._e('ba')) return; const box = this._e('ba'), W = box.clientWidth; if (!W) return; const F = this._F;
+    const H = 120, L = 44, R = 4, T = 8, B = 18, iw = W - L - R, ih = H - T - B;
+    const tage = this._tageListe().map(d => ({ t: d.getTime() / 1000, wh: (this._energie('grid_export_energy', d.getTime(), naechsterTag(d).getTime()) || 0) * 1000 }));
+    const mx = Math.max(10, ...tage.map(x => x.wh)), p = Math.pow(10, Math.floor(Math.log10(mx))), oben = Math.ceil(mx / p) * p, n = tage.length, bw = iw / n;
+    let g = ''; for (const f of [0, .5, 1]) { const y = T + ih * (1 - f); g += `<line x1="${L}" x2="${W - R}" y1="${y}" y2="${y}" stroke="${f === 0 ? '#71839a' : '#2a3950'}"/><text x="${L - 4}" y="${y + 3.5}" text-anchor="end">${oben * f >= 1000 ? F.zahl(oben * f / 1000, 1) + ' kWh' : F.zahl(oben * f, 0) + ' Wh'}</text>`; }
+    tage.forEach((x, i) => { const h = x.wh / oben * ih, xp = L + i * bw + 1, br = Math.max(bw - 2, 2); if (h > 0.5) g += `<path d="M${xp} ${T + ih} V${T + ih - h + 2} q0 -2 2 -2 H${xp + br - 2} q2 0 2 2 V${T + ih}Z" fill="${A_FARBE.einsp}"/>`; if (i % Math.ceil(n / (W < 420 ? 4 : 6)) === 0 || i === n - 1) g += `<text x="${xp + br / 2}" y="${H - 5}" text-anchor="middle">${F.datum(new Date(x.t * 1000))}</text>`; });
+    const s = this._e('bs'); s.setAttribute('viewBox', `0 0 ${W} ${H}`); s.setAttribute('height', H); s.innerHTML = g; this._bG = { tage, L, bw, W };
+  }
+  _bHover(ev) { if (!this._bG) return; const F = this._F, r = this._e('ba').getBoundingClientRect(), x = ev.clientX - r.left, t = this._bG.tage[Math.floor((x - this._bG.L) / this._bG.bw)], tip = this._e('bt'); if (!t) { tip.style.display = 'none'; return; } tip.innerHTML = `<b>${F.datum(new Date(t.t * 1000))}</b><span>${esc(this._T.eingespeist)} <em>${F.whk(t.wh / 1000)}</em></span>`; tip.style.display = 'block'; const tw = tip.offsetWidth; tip.style.left = (x + 12 + tw > this._bG.W ? x - 12 - tw : x + 12) + 'px'; }
+  // ---------- Liniendiagramm ----------
+  _heuteAnsicht() { this._tag = null; const kd = this._e('k_d'); kd.value = this._iso(new Date()); this._e('k_n').disabled = true; if (this._regel) this._ladeHeute(); }
+  async _tagWahl(d) {
+    const h = mitternacht(), T = this._T, F = this._F; d = mitternacht(d); if (d > h) d = h;
+    if (d.getTime() === h.getTime()) { this._fi = 3; this.shadowRoot.querySelectorAll('#tabs button').forEach(x => x.setAttribute('aria-pressed', x.dataset.i === '3')); this._heuteAnsicht(); return this._lade(); }
+    this._tag = d; this._e('k_d').value = this._iso(d); this._e('k_n').disabled = false;
+    this.shadowRoot.querySelectorAll('#tabs button').forEach(x => x.setAttribute('aria-pressed', 'false'));
+    const von = d.getTime() / 1000, bis = naechsterTag(d).getTime() / 1000, nr = this._nr = (this._nr || 0) + 1;
+    this._txt('ch_h', T.lade);
+    try {
+      const r = await this._hist(von, bis); if (nr !== this._nr) return;
+      if (r.netz.length > 200) { this._d = { ...r, von, bis, stat: false }; this._txt('ch_h', tpl(T.hTag, { d: F.datum(d) })); if (this._regel) this._ladeHeute(d, r); }
+      else { const s = await this._statReihen(von, bis); if (nr !== this._nr) return; this._d = { ...s, von, bis, stat: true }; this._txt('ch_h', tpl(T.hAlt, { d: F.datum(d) })); if (this._regel) this._ladeHeute(d, null); }
+      this._zeichne();
+    } catch (err) { console.warn('energie-dashboard-auswertung: day', err); this._txt('ch_h', T.fehler); }
+  }
+  async _zoom(t) {
+    const von = t - 90, bis = t + 150, nr = this._nr = (this._nr || 0) + 1, T = this._T;
+    this.shadowRoot.querySelectorAll('#tabs button').forEach(x => x.setAttribute('aria-pressed', 'false'));
+    this._txt('ch_h', T.lade); this._e('ch').scrollIntoView({ block: 'center', behavior: 'smooth' });
+    try { const r = await this._hist(von, bis); if (nr !== this._nr) return; this._d = { ...r, von, bis, stat: false }; this._txt('ch_h', tpl(T.hZoom, { t: new Date(t * 1000).toLocaleTimeString(this._F.loc) })); this._zeichne(); }
+    catch (e) { console.warn('energie-dashboard-auswertung: zoom', e); this._txt('ch_h', T.fehler); }
+  }
+  async _lade() {
+    const [, f, st] = this._fenster[this._fi], jetzt = Date.now() / 1000, von = f ? jetzt - f : mitternacht().getTime() / 1000, nr = this._nr = (this._nr || 0) + 1, T = this._T;
+    this._txt('ch_h', T.lade);
+    try {
+      if (st) { const s = await this._statReihen(von, jetzt); if (nr !== this._nr) return; this._d = { ...s, von, stat: true }; this._txt('ch_h', T.hStat + (this._c.store_statistics && this._regel ? T.hStatGesp : '')); if (this._c.store_statistics && this._regel && !this._stat) this._leseGespeichert(); }
+      else { const r = await this._hist(von, jetzt); if (nr !== this._nr) return; this._d = { ...r, von, stat: false }; this._txt('ch_h', T.hRoh); }
+      this._zeichne();
+    } catch (e) { console.warn('energie-dashboard-auswertung: history', e); this._txt('ch_h', T.fehler); }
+  }
+  _live() {
+    const h = this._hass, c = this._c, an = this._an, F = this._F, T = this._T, g = id => wert(h, id, 'power');
+    const netz = netzW(c, g), bat = an.akku ? akkuW(c, g) : null, ac = an.akku ? (c.output_power ? g(c.output_power) : bat === null ? null : Math.max(bat, 0)) : null;
+    const pv = an.solar ? g(c.solar_power) : 0, haus = c.home_power ? g(c.home_power) : netz === null ? null : c.output_power ? Math.max(netz + (ac || 0), 0) : Math.max(netz + (pv || 0) + (bat || 0), 0);
+    this._txt('l_n', netz === null ? '–' : netz < 0 ? F.watt(-netz) + ' ' + T.netzRaus : F.watt(netz)); this._txt('l_a', F.watt(ac)); this._txt('l_h', F.watt(haus));
+    this._txt('l_r', bat === null ? '–' : F.watt(Math.max(-bat, 0))); this._txt('l_u', bat === null ? '–' : F.watt(Math.max(bat, 0)));
+    this._zeigeEnergie();
+    // Live-Werte an die laufende Ansicht anhaengen
+    if (this._d && !this._d.stat && !this._d.bis) {
+      const t = Date.now() / 1000, neu = { netz, ac, lad: bat === null ? null : Math.max(-bat, 0), ent: bat === null ? null : Math.max(bat, 0), haus };
+      for (const [k, v] of Object.entries(neu)) { const a = this._d[k]; if (!a) continue; const l = a[a.length - 1]; if (!l || t - l[0] >= 1 || l[1] !== v) a.push([t, v]); }
+    }
+  }
+  _buckets(a, von, bis, n) {
+    const m = new Array(n).fill(null), lo = new Array(n).fill(null), hi = new Array(n).fill(null), dt = (bis - von) / n; if (!a || !a.length) return { m, lo, hi };
+    let i = 0;
+    for (let b = 0; b < n; b++) {
+      const t0 = von + b * dt, t1 = t0 + dt; let su = 0, ge = 0, mn = null, mx = null;
+      while (i + 1 < a.length && a[i + 1][0] <= t0) i++;
+      for (let j = i; j < a.length && a[j][0] < t1; j++) { const s = Math.max(a[j][0], t0), e = Math.min(j + 1 < a.length ? a[j + 1][0] : bis, t1), v = a[j][1]; if (e > s && v !== null) { su += v * (e - s); ge += e - s; mn = mn === null ? v : Math.min(mn, v); mx = mx === null ? v : Math.max(mx, v); } }
+      if (ge > 0) { m[b] = su / ge; lo[b] = mn; hi[b] = mx; }
+    }
+    return { m, lo, hi };
+  }
+  _zeichne() {
+    if (!this._d || !this._e || !this._e('ch')) return; const ch = this._e('ch'), W = ch.clientWidth; if (!W) return;
+    const F = this._F, T = this._T, an = this._an, op = this._op();
+    const klein = W < 520, L = 46, R = 8, Tp = 6, B = 22, LUECKE = 14, iw = W - L - R, bis = this._d.bis || Date.now() / 1000, von = this._d.von, stat = this._d.stat;
+    const n = stat ? clamp(Math.round((bis - von) / 3600), 24, 760) : clamp(Math.round(iw / 1.5), 40, 800);
+    const N = this._buckets(this._d.netz, von, bis, n), A = this._buckets(this._d.ac, von, bis, n), RN = this._buckets(this._d.lad, von, bis, n), UN = this._buckets(this._d.ent, von, bis, n), HS = this._buckets(this._d.haus, von, bis, n);
+    if (stat) { N.lo = this._buckets(this._d.netzMin, von, bis, n).m; N.hi = this._buckets(this._d.netzMax, von, bis, n).m; }
+    const hN = klein ? 210 : 240, hA = an.akku ? (klein ? 80 : 90) : 0, hR = an.akku ? (klein ? 80 : 90) : 0, hH = klein ? 100 : 110, RES = 42;
+    const H = Tp + hN + LUECKE + (an.akku ? hA + LUECKE + hR + LUECKE : 0) + hH + B;
+    const nett = (lo, hi, anz) => { const roh = Math.max(hi - lo, 50) / anz, p = Math.pow(10, Math.floor(Math.log10(roh))), st = [1, 2, 2.5, 5, 10].map(k => k * p).find(k => k >= roh); return { st, lo: Math.floor(lo / st) * st, hi: Math.ceil(hi / st) * st }; };
+    let nLo = 0, nHi = 50, aHi = 50, hHi = 50, rHi = 50;
+    for (let i = 0; i < n; i++) { if (N.hi[i] !== null) { nHi = Math.max(nHi, N.hi[i]); nLo = Math.min(nLo, N.lo[i] ?? 0); } if (A.m[i] !== null) aHi = Math.max(aHi, A.hi[i] ?? A.m[i]); const hh = HS.hi[i] ?? HS.m[i]; if (hh !== null) hHi = Math.max(hHi, hh); for (const q of [RN, UN]) { const w = q.hi[i] ?? q.m[i]; if (w !== null) rHi = Math.max(rHi, w); } }
+    const pN = { top: Tp + RES, h: hN - 2 * RES, ...nett(nLo, nHi, 4) };
+    let y0 = Tp + hN + LUECKE; const pA = an.akku ? { top: y0, h: hA, ...nett(0, aHi, 2) } : null; if (an.akku) y0 += hA + LUECKE;
+    const pR = an.akku ? { top: y0, h: hR, ...nett(0, rHi, 2) } : null; if (an.akku) y0 += hR + LUECKE;
+    const pH = { top: y0, h: hH, ...nett(0, hHi, 2) };
+    const Y = (p, v) => p.top + (p.hi - v) / (p.hi - p.lo) * p.h, x = i => L + (i + .5) / n * iw, X = t => L + (t - von) / (bis - von) * iw;
+    const lbl = v => Math.abs(v) >= 1000 ? F.zahl(v / 1000, Math.abs(v) % 1000 ? 1 : 0) + ' kW' : F.zahl(v, 0) + ' W';
+    let g = '';
+    const gitter = (p, titel, farbe) => {
+      for (let w = p.lo; w <= p.hi + 1e-6; w += p.st) { const v = Math.abs(w) < 1e-6 ? 0 : w, yy = Y(p, v).toFixed(1); g += v === 0 ? `<line x1="${L}" x2="${W - R}" y1="${yy}" y2="${yy}" stroke="#eef3f8" stroke-width="1.3"/><text x="${L - 5}" y="${(+yy + 3.5).toFixed(1)}" text-anchor="end" style="fill:#eef3f8;font-weight:700">0 W</text>` : `<line x1="${L}" x2="${W - R}" y1="${yy}" y2="${yy}" stroke="#2a3950"/><text x="${L - 5}" y="${(+yy + 3.5).toFixed(1)}" text-anchor="end">${lbl(v)}</text>`; }
+      g += `<text x="${L + 4}" y="${(p === pN ? Tp + 11 : p.top + 11).toFixed(1)}" style="fill:${farbe};font-weight:700;font-size:11px">${esc(titel)}</text>`;
+    };
+    gitter(pN, T.netz, A_FARBE.netz); if (an.akku) { gitter(pA, T.ac, A_FARBE.ac); gitter(pR, T.reinraus, '#eef3f8'); } gitter(pH, T.haus, A_FARBE.haus);
+    const xn = klein ? 3 : 6, fmt = s => bis - von > 2 * 86400 ? F.datum(new Date(s * 1000)) : bis - von < 900 ? new Date(s * 1000).toLocaleTimeString(F.loc) : F.hhmm(s * 1000);
+    for (let k = 0; k <= xn; k++) { const xx = L + iw * k / xn; g += `<line x1="${xx.toFixed(1)}" x2="${xx.toFixed(1)}" y1="${Tp}" y2="${H - B}" stroke="#222f44"/><text x="${xx.toFixed(1)}" y="${H - 6}" text-anchor="${k === 0 ? 'start' : k === xn ? 'end' : 'middle'}">${fmt(von + (bis - von) * k / xn)}</text>`; }
+    { const bw = Math.max(iw / n, 2); for (let i = 0; i < n; i++) if (N.lo[i] !== null && N.lo[i] < 0) g += `<rect x="${(x(i) - bw / 2).toFixed(1)}" y="${Y(pN, 0).toFixed(1)}" width="${bw.toFixed(1)}" height="${(Y(pN, N.lo[i]) - Y(pN, 0)).toFixed(1)}" fill="${A_FARBE.einsp}" opacity=".75"/>`; }
+    const huelle = (p, Q, farbe, nurMittel) => { let d = '', auf = false; for (let i = 0; i < n; i++) { const a = nurMittel ? Q.m[i] : (Q.lo[i] ?? Q.m[i]), b = nurMittel ? Q.m[i] : (Q.hi[i] ?? Q.m[i]); if (a === null || b === null) { auf = false; continue; } const vor = i > 0 && Q.m[i - 1] !== null ? Q.m[i - 1] : Q.m[i], [p1, p2] = Math.abs(a - vor) < Math.abs(b - vor) ? [a, b] : [b, a]; d += `${auf ? 'L' : 'M'}${x(i).toFixed(1)} ${Y(p, p1).toFixed(1)}`; if (p2 !== p1) d += `L${x(i).toFixed(1)} ${Y(p, p2).toFixed(1)}`; auf = true; } g += `<path d="${d}" fill="none" stroke="${farbe}" stroke-width="1.1" stroke-linejoin="round"/>`; };
+    huelle(pN, N, A_FARBE.netz, false);
+    if (an.akku) { huelle(pA, A, A_FARBE.ac, stat); huelle(pR, RN, A_FARBE.rein, stat); huelle(pR, UN, A_FARBE.raus, stat); }
+    huelle(pH, HS, A_FARBE.haus, stat);
+    // Hinweise in den freien Streifen ueber und unter dem Netzbereich
+    if (this._regel) {
+      const bx = [], frei = (li, ob, re, un) => !bx.some(q => li < q[2] + 3 && re > q[0] - 3 && ob < q[3] + 1 && un > q[1] - 1), bh = 15;
+      const marke = (xp, ypk, text, farbe, unten) => {
+        const bw = text.length * (klein ? 5 : 5.4) + 8;
+        for (const r of [0, 1]) for (const sx of [0, -1, 1, -2, 2, -3, 3]) {
+          const x0 = clamp(xp - bw / 2 + sx * (bw + 3), L + 1, W - R - bw - 1), y1 = unten ? pN.top + pN.h + RES - bh - 2 - r * (bh + 2) : pN.top - RES + 4 + r * (bh + 2) + (r === 0 ? 13 : 0);
+          if (!frei(x0, y1, x0 + bw, y1 + bh)) continue;
+          bx.push([x0, y1, x0 + bw, y1 + bh]);
+          const xz = clamp(xp, x0 + 3, x0 + bw - 3), yz = unten ? y1 : y1 + bh;
+          g += `<g class="mk"><path d="M${xp.toFixed(1)} ${ypk.toFixed(1)} L${xz.toFixed(1)} ${yz.toFixed(1)}" stroke="${farbe}" stroke-width=".8" stroke-opacity=".7" fill="none"/><rect x="${x0.toFixed(1)}" y="${y1.toFixed(1)}" width="${bw.toFixed(1)}" height="${bh}" rx="3" fill="#0a111c" fill-opacity=".45" stroke="${farbe}" stroke-opacity=".7" stroke-width=".8"/><text x="${(x0 + bw / 2).toFixed(1)}" y="${(y1 + 11).toFixed(1)}" text-anchor="middle" style="fill:#eef3f8;font-size:${klein ? 9.5 : 10}px;font-weight:600">${esc(text)}</text></g>`;
+          return;
+        }
+      };
+      const sek = s => s === undefined || s === null ? '–' : F.zahl(s, 0) + ' s';
+      if (!stat) {
+        const mind = bis - von <= 1800 ? op.band : 100, ev = einspeiseSpitzen(this._d.netz, [], von, bis, op.band).filter(e => e.tief <= -mind).sort((a, b) => a.tief - b.tief).slice(0, 12);
+        for (const e of ev) marke(X(e.t + e.dauer / 2), Y(pN, e.tief), `${F.watt(e.tief)} · ${sek(e.dauer)}`, A_FARBE.einsp, true);
+        if (this._ausw && this._ausw.schnell) for (const e of this._ausw.liste) { if (e.t < von || e.t > bis || e.vz < 0) continue; marke(X(e.t), Y(pN, e.pk), `+${F.watt(e.pk)} · ${e.fertig !== null ? e.fertig + ' s' : (e.begin ?? '–') + ' s …'}`, e.kurz ? '#a7b6c5' : A_FARBE.netz, false); }
+      } else if (this._stat) {
+        const reihe = k => (this._stat[`${A_QUELLE}:${k}`] || []).map(q => [ts(q.start) / 1000, q.mean]), s2 = new Map(reihe('spitze_s')), j2 = new Map(reihe('sprung_s')), ev = [], jp = [];
+        for (const [t, w] of reihe('spitze_w')) if (t >= von && t <= bis && w <= -100) ev.push({ t: t + 1800, w, s: s2.get(t) });
+        for (const [t, w] of reihe('sprung_w')) if (t >= von && t <= bis) jp.push({ t: t + 1800, w, s: j2.get(t) });
+        ev.sort((a, b) => a.w - b.w).slice(0, 14).forEach(e => marke(X(e.t), Y(pN, e.w), `${F.watt(e.w)} · ${sek(e.s)}`, A_FARBE.einsp, true));
+        jp.sort((a, b) => b.w - a.w).slice(0, 8).forEach(e => marke(X(e.t), Y(pN, e.w), `+${F.watt(e.w)} · ${sek(e.s)}`, A_FARBE.netz, false));
+      }
+    }
+    if (this._hx !== null && this._hx !== undefined) {
+      const i = clamp(Math.round((this._hx - L) / iw * n - .5), 0, n - 1), tip = this._e('tip'), t = von + (i + .5) * (bis - von) / n;
+      if (N.m[i] !== null || A.m[i] !== null) {
+        g += `<line x1="${x(i).toFixed(1)}" x2="${x(i).toFixed(1)}" y1="${Tp}" y2="${H - B}" stroke="#eef3f8" stroke-opacity=".45"/>`;
+        const z = (n2, v) => `<span>${esc(n2)} <em>${F.watt(v)}</em></span>`;
+        tip.innerHTML = `<b>${stat ? F.datum(new Date(t * 1000)) + ' ' : ''}${bis - von < 900 ? new Date(t * 1000).toLocaleTimeString(F.loc) : F.hhmm(t * 1000)}</b>${z(T.netz, N.m[i])}${N.lo[i] !== N.hi[i] && N.lo[i] !== null ? `<span>min / max <em>${F.watt(N.lo[i])} / ${F.watt(N.hi[i])}</em></span>` : ''}${an.akku ? z(T.ac, A.m[i]) + z(T.rein, RN.m[i]) + z(T.raus, UN.m[i]) : ''}${z(T.haus, HS.m[i])}`;
+        tip.style.display = 'block'; const tw = tip.offsetWidth; tip.style.left = (x(i) + 12 + tw > W ? x(i) - 12 - tw : x(i) + 12) + 'px';
+      } else tip.style.display = 'none';
+    }
+    const sv = this._e('sv'); sv.setAttribute('viewBox', `0 0 ${W} ${H}`); sv.setAttribute('height', H); sv.innerHTML = g;
+  }
+  // ---------- Regelverhalten ----------
+  async _ladeHeute(tag = null, vorhanden) {
+    if (!this._regel) return;
+    const T = this._T, F = this._F, op = this._op(), heute = !tag, st = tag ? tag.getTime() / 1000 : mitternacht().getTime() / 1000, von = Math.max(st, this._seit()), bis = tag ? naechsterTag(tag).getTime() / 1000 : Date.now() / 1000, nr = this._an2 = (this._an2 || 0) + 1;
+    const wort = heute ? T.heute : F.datum(tag), b = op.band;
+    this._txt('t_r', T.regel + ' ' + wort); this._txt('t_l', T.lastspr + ' · ' + wort); this._txt('t_s', T.spitzen + ' · ' + wort);
+    try {
+      const ohne = vorhanden === null || bis <= von, r = ohne ? { netz: [], ac: [] } : vorhanden || await this._hist(von, bis); if (nr !== this._an2) return;
+      const a = auswerten(r.netz, r.ac, von, bis, op); this._ausw = a; if (heute) this._heute = a; else this._lokal[st] = this._tagWerte(a);
+      const s = (v, e) => v === null ? '–' : F.zahl(v, v < 10 && v % 1 ? 1 : 0) + ' ' + e, mb = median(a.reaktion), mf = median(a.ausregel);
+      const slow = this._e('r_slow'); if (slow) { slow.hidden = ohne || a.schnell || a.takt === null; slow.textContent = a.takt === null ? '' : tpl(T.zuLangsam, { t: F.zahl(a.takt, a.takt < 10 ? 1 : 0) }); }
+      const lsBox = this._e('ls_box'); if (lsBox) lsBox.hidden = !ohne && !a.schnell;
+      this._txt('r_b', a.schnell ? s(mb, 's') : '–'); this._txt('r_bs', !a.schnell ? '' : a.gewertet ? (a.gewertet === 1 ? T.gewertet1 : tpl(T.gewertet, { n: a.gewertet })) : T.keinSprung);
+      this._txt('r_f', a.schnell ? s(mf, 's') : '–'); this._txt('r_fs', !a.schnell ? '' : a.nichtFertig ? tpl(T.nichtFertig, { n: a.nichtFertig }) : a.spitzen ? tpl(T.kurz, { n: a.spitzen }) : '');
+      this._txt('r_q', a.aktiv_s ? F.zahl(a.imBand / a.aktiv_s * 100, 1) + ' %' : '–'); this._txt('r_qs', a.aktiv_s ? tpl(T.waehrend, { h: F.zahl(a.aktiv_s / 3600, 1) }) : T.akkuNicht);
+      this._txt('r_e', a.takt === null ? '–' : '≈ ' + F.zahl(a.takt, a.takt < 2 ? 1 : 0) + ' s'); this._txt('r_es', tpl(T.taktS, { a: a.taktA === null ? '–' : F.zahl(a.taktA, 0) }));
+      const sp = a.ein, tief = sp.length ? Math.min(...sp.map(x => x.tief)) : null, lang = sp.length ? Math.max(...sp.map(x => x.dauer)) : null, uhrS = t => new Date(t * 1000).toLocaleTimeString(F.loc);
+      this._txt('r_t', ohne ? '–' : tief === null ? T.keine : F.watt(tief)); this._txt('r_ts', ohne ? '' : tief === null ? tpl(T.nichtsUnter, { b }) : tpl(T.um, { t: uhrS(sp.find(x => x.tief === tief).t) }));
+      this._txt('r_l', ohne ? '–' : lang === null ? T.keine : F.zahl(lang, 0) + ' s'); this._txt('r_ls', lang === null ? '' : tpl(T.spitzenZus, { n: sp.length, s: F.zahl(sp.reduce((q, x) => q + x.dauer, 0), 0) }));
+      const mehr = n2 => n2 > 20 ? `<tr><td colspan="5" class="lade">${esc(tpl(T.weitere, { n: n2 - 20 }))}</td></tr>` : '';
+      const tb = this._e('sp'), html = sp.slice().sort((x, y) => y.t - x.t).slice(0, 20).map(x => `<tr data-z="${Math.round(x.t)}" tabindex="0" role="button"><td>${uhrS(x.t)}</td><td>${F.watt(x.tief)}</td><td>${F.zahl(x.dauer, 0)} s${x.laeuft ? ' …' : ''}</td><td>${F.zahl(x.wh, x.wh < 10 ? 1 : 0)} Wh</td>${this._c.show_cause ? `<td>${esc(T[x.art])}</td>` : ''}</tr>`).join('') + mehr(sp.length);
+      if (tb && tb.dataset.h !== html) { tb.dataset.h = html; tb.innerHTML = html || `<tr><td colspan="5" class="lade">${esc(ohne ? T.keineSek : wort + ': ' + tpl(T.keineEin, { b }))}</td></tr>`; }
+      const lb = this._e('ls'), lh = a.liste.slice().sort((x, y) => y.t - x.t).slice(0, 20).map(x => `<tr data-z="${Math.round(x.t)}" tabindex="0" role="button"><td>${uhrS(x.t)}</td><td>${x.vz > 0 ? '+' : '−'}${F.watt(x.pk)}</td><td>${x.begin === null ? '–' : x.begin + ' s'}</td><td>${x.fertig === null ? esc(T.nichtIn2) : x.fertig + ' s'}</td><td>${esc(x.kurz ? T.gingNicht : T.gingMit)}</td></tr>`).join('') + mehr(a.liste.length);
+      if (lb && lb.dataset.h !== lh) { lb.dataset.h = lh; lb.innerHTML = lh || `<tr><td colspan="5" class="lade">${esc(ohne ? T.keineSek : wort + ': ' + T.keinLs)}</td></tr>`; }
+      this._zeigeTages(); this._zeichne();
+    } catch (e) { console.warn('energie-dashboard-auswertung: regulation', e); this._txt('r_h', T.fehler); }
+  }
+  _tagWerte(a) {
+    const sch = a.schnell;
+    return { aktiv_h: a.aktiv_s / 3600, ereignisse: sch ? a.gewertet : null, band_pct: a.aktiv_s ? a.imBand / a.aktiv_s * 100 : null, reaktion_s: sch ? median(a.reaktion) : null, ausregel_s: sch ? median(a.ausregel) : null, tiefste_w: a.ein.length ? Math.min(...a.ein.map(x => x.tief)) : 0, laengste_s: a.ein.length ? Math.max(...a.ein.map(x => x.dauer)) : 0, anz_spitzen: a.ein.length, stand: A_STAND };
+  }
+  async _leseGespeichert() {
+    try { this._stat = await this._ws({ type: 'recorder/statistics_during_period', start_time: new Date(this._seit() * 1000 - 864e5).toISOString(), statistic_ids: A_IDS, period: 'hour', types: ['mean'] }); this._zeigeTages(); this._zeichne(); }
+    catch (e) { console.warn('energie-dashboard-auswertung: stored', e); }
+  }
+  // Abgeschlossene Tage auswerten. Gespeichert wird NUR mit store_statistics: true (Zustimmung im Editor).
+  async _ladeTage() {
+    if (this._tl) return; this._tl = true; const c = this._c, op = this._op(), speichern = c.store_statistics === true;
+    try {
+      if (speichern) await this._leseGespeichert();
+      const fertig = new Set(((this._stat || {})[`${A_QUELLE}:stand`] || []).filter(x => x.mean >= A_STAND).map(x => ts(x.start) / 1000));
+      const grenze = Date.now() / 1000 - (Math.max(+c.raw_days || 10, 1) - 0.5) * 86400, seit = this._seit(), heute = mitternacht();
+      for (const d = mitternacht(new Date(seit * 1000)); d < heute; d.setDate(d.getDate() + 1)) {
+        const t = d.getTime() / 1000, bis = naechsterTag(d).getTime() / 1000; if (fertig.has(t) || t < grenze || this._lokal[t]) continue;
+        const r = await this._hist(Math.max(t, seit), bis); if (r.netz.length < 50) continue;
+        const a = auswerten(r.netz, r.ac, Math.max(t, seit), bis, op), w = this._tagWerte(a);
+        this._lokal[t] = w; this._zeigeTages();
+        if (!speichern) continue;
+        this._txt('st_h', tpl(this._T.speichert, { d: this._F.datum(d) }));
+        const meta = (k, unit, name) => ({ has_mean: true, mean_type: 1, has_sum: false, name: 'Energie Auswertung ' + name, source: A_QUELLE, statistic_id: `${A_QUELLE}:${k}`, unit_of_measurement: unit, unit_class: null });
+        for (const [k, v] of Object.entries(w)) { if (v === null) continue; await this._ws({ type: 'recorder/import_statistics', metadata: meta(k, A_STATS[k], k), stats: [{ start: new Date(t * 1000).toISOString(), mean: v, min: v, max: v }] }); }
+        const std = { spitze_w: [], spitze_s: [], sprung_w: [], sprung_s: [] }, h1 = {}, h2 = {}, voll = s => Math.floor(s / 3600) * 3600, zeile = (s, v) => ({ start: new Date(s * 1000).toISOString(), mean: v, min: v, max: v });
+        for (const e of a.ein) { const k = voll(e.t); if (!h1[k] || e.tief < h1[k].tief) h1[k] = e; }
+        if (a.schnell) for (const e of a.liste) { if (e.kurz || e.vz < 0) continue; const k = voll(e.t), s = e.fertig ?? e.begin; if (s === null) continue; if (!h2[k] || e.pk > h2[k].pk) h2[k] = { ...e, s }; }
+        for (const [k, e] of Object.entries(h1)) { std.spitze_w.push(zeile(+k, e.tief)); std.spitze_s.push(zeile(+k, e.dauer)); }
+        for (const [k, e] of Object.entries(h2)) { std.sprung_w.push(zeile(+k, e.pk)); std.sprung_s.push(zeile(+k, e.s)); }
+        for (const [k, st] of Object.entries(std)) { if (st.length) await this._ws({ type: 'recorder/import_statistics', metadata: meta(k, A_STUNDE[k], k), stats: st }); }
+        await new Promise(z => setTimeout(z, 500));
+      }
+      if (speichern) { this._txt('st_h', tpl(this._T.speichernAn, { r: +c.raw_days || 10 })); await new Promise(z => setTimeout(z, 1000)); await this._leseGespeichert(); }
+    } catch (e) { console.warn('energie-dashboard-auswertung: days', e); } finally { this._tl = false; }
+  }
+  _zeigeTages() {
+    const tb = this._e && this._e('tb'); if (!tb) return; const F = this._F, T = this._T, an = this._an, R = this._regel, heute = mitternacht().getTime() / 1000, zeilen = {};
+    const leg = (t, k, v) => { (zeilen[t] = zeilen[t] || {})[k] = v; };
+    for (const d of this._tageListe()) if (d.getTime() / 1000 >= this._seit() - 1) zeilen[d.getTime() / 1000] = zeilen[d.getTime() / 1000] || {};
+    if (this._stat) for (const k of Object.keys(A_STATS)) for (const x of this._stat[`${A_QUELLE}:${k}`] || []) leg(ts(x.start) / 1000, k, x.mean);
+    for (const [t, w] of Object.entries(this._lokal || {})) for (const [k, v] of Object.entries(w)) if (v !== null) leg(+t, k, v);
+    if (this._heute) for (const [k, v] of Object.entries(this._tagWerte(this._heute))) if (v !== null) leg(heute, k, v);
+    const f = (v, d, e) => v === undefined || v === null ? '–' : F.zahl(v, d) + e;
+    const html = Object.keys(zeilen).map(Number).sort((a, b) => b - a).map(t => {
+      const z = zeilen[t], von = t * 1000, bis = naechsterTag(new Date(von)).getTime() + (t === heute ? 0 : 0), ende = t === heute ? Date.now() + 1 : bis;
+      const ak = an.akku ? (() => { const x = this._bilanz(von, ende); return `<td>${F.whk(x.rein)}</td><td>${F.whk(x.raus)}</td><td>${this._vText(x)}</td>`; })() : '';
+      const rg = R ? `<td>${f(z.aktiv_h, 1, ' h')}</td><td>${f(z.band_pct, 1, ' %')}</td><td>${f(z.reaktion_s, 0, ' s')}</td><td>${f(z.ausregel_s, 0, ' s')}</td><td>${z.tiefste_w === undefined ? '–' : F.watt(z.tiefste_w)}</td><td>${f(z.laengste_s, 0, ' s')}</td><td>${f(z.anz_spitzen, 0, '')}</td>` : '';
+      return `<tr data-t="${t}" tabindex="0" role="button"><td>${t === heute ? esc(T.heute) : F.datum(new Date(von))}</td>${ak}<td>${F.whk(this._energie('grid_export_energy', von, ende))}</td>${rg}</tr>`;
+    }).join('');
+    if (tb.dataset.h !== html) { tb.dataset.h = html; tb.innerHTML = html || `<tr><td colspan="${this._spalten}" class="lade">${esc(T.nochKeine)}</td></tr>`; }
+  }
+  _txt(id, t) { const e = this._e && this._e(id); if (e && e.textContent !== t) e.textContent = t; }
+}
+
 if (!customElements.get('energie-dashboard-card')) customElements.define('energie-dashboard-card', EnergieDashboardCard);
+if (!customElements.get('energie-dashboard-auswertung-card')) customElements.define('energie-dashboard-auswertung-card', EnergieDashboardAuswertungCard);
 if (!customElements.get('energie-dashboard-card-editor')) customElements.define('energie-dashboard-card-editor', EnergieDashboardCardEditor);
 window.customCards = window.customCards || [];
 if (!window.customCards.some(k => k.type === 'energie-dashboard-card')) window.customCards.push({ type: 'energie-dashboard-card', name: 'Energie Dashboard Card', description: 'Haus als Insel mit Strom, Solar, Akku, Gas und Wasser: live und als Tageswerte', preview: true, documentationURL: 'https://github.com/tlangfe/energie-dashboard' });
+if (!window.customCards.some(k => k.type === 'energie-dashboard-auswertung-card')) window.customCards.push({ type: 'energie-dashboard-auswertung-card', name: 'Energie Dashboard Auswertung (Pro)', description: 'Einspeisung, Akku rein/raus, Verlauf und Regelverhalten des Akkus nach Tag, Woche und Monat', preview: false, documentationURL: 'https://github.com/tlangfe/energie-dashboard#energie-auswertung-pro' });
 console.info(`%c ENERGIE-DASHBOARD-CARD %c ${VERSION} `, 'color:#fff;background:#128f65;font-weight:700', 'color:#128f65;background:#fff;font-weight:700');

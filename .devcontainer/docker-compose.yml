@@ -1,0 +1,21 @@
+# Codespaces-/Dev-Container-Test: Home Assistant mit Beispielsensoren und beiden Karten.
+services:
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    restart: unless-stopped
+    environment:
+      - TZ=Europe/Berlin
+    volumes:
+      - ./ha-config:/config
+      # Kartendatei direkt aus dem Repository, damit Aenderungen nach dem Neuladen sichtbar sind
+      - ../dist:/config/www/energie-dashboard-card:ro
+
+  workspace:
+    image: mcr.microsoft.com/devcontainers/javascript-node:22
+    command: sleep infinity
+    # Gleiches Netz wie Home Assistant: Port 8123 liegt damit auf localhost und wird weitergeleitet
+    network_mode: service:homeassistant
+    depends_on:
+      - homeassistant
+    volumes:
+      - ..:/workspaces/energie-dashboard:cached

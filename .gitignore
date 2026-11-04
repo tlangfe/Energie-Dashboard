@@ -4,3 +4,6 @@ privat/
 sicherung-*.json
 *.log
 .DS_Store
+# Laufzeitdateien des Test-Home-Assistant (Codespaces)
+.devcontainer/ha-config/*
+!.devcontainer/ha-config/configuration.yaml

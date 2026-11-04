@@ -1,0 +1,16 @@
+{
+  "name": "Energie Dashboard Card · Home Assistant Test",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "workspace",
+  "workspaceFolder": "/workspaces/energie-dashboard",
+  "shutdownAction": "stopCompose",
+  "forwardPorts": [8123],
+  "portsAttributes": {
+    "8123": { "label": "Home Assistant", "onAutoForward": "openBrowser" }
+  },
+  "postStartCommand": "node .devcontainer/setup.mjs",
+  "hostRequirements": { "cpus": 2, "memory": "4gb" },
+  "customizations": {
+    "codespaces": { "openFiles": [".devcontainer/README.md"] }
+  }
+}

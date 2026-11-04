@@ -22,7 +22,8 @@ Eine kompakte, dunkle Lovelace-Karte für Home Assistant: Dein Haus schwebt als 
 - **Dein eigenes Haus:** Bild hochladen (es wird in den HA-Medien gespeichert), Form, Größe, Position und Ankerpunkte einstellen.
 - **Ruhige Animation:** Pro Linie läuft genau eine langsame Blase, die Geschwindigkeit hängt von der Leistung ab. `prefers-reduced-motion` wird beachtet.
 - **Deutsch und Englisch,** Zahlen und Uhrzeiten im passenden Format.
-- **Eine einzige Datei** ohne Abhängigkeiten.
+- **Eine einzige Datei** ohne Abhängigkeiten, mit zwei Karten: der Hauptkarte und der [Energie Auswertung (Pro)](#energie-auswertung-pro).
+- **Ausprobieren ohne eigenes HA** in [GitHub Codespaces](#ausprobieren-ohne-eigenes-home-assistant-github-codespaces).
 
 ## Installation
 
@@ -37,7 +38,7 @@ Eine kompakte, dunkle Lovelace-Karte für Home Assistant: Dein Haus schwebt als 
 ### Manuell
 
 1. `dist/energie-dashboard-card.js` aus dem [neuesten Release](https://github.com/tlangfe/energie-dashboard/releases) nach `/config/www/` kopieren.
-2. **Einstellungen › Dashboards › ⋮ › Ressourcen › Ressource hinzufügen**: URL `/local/energie-dashboard-card.js?v=1.0.0-beta.1`, Typ **JavaScript-Modul**.
+2. **Einstellungen › Dashboards › ⋮ › Ressourcen › Ressource hinzufügen**: URL `/local/energie-dashboard-card.js?v=1.0.0-beta.2`, Typ **JavaScript-Modul**.
 3. Die Browserseite neu laden. Bei jedem Update die Zahl hinter `?v=` erhöhen, damit Browser und App die neue Datei laden.
 
 ## Ersteinrichtung
@@ -159,6 +160,66 @@ anchor_home_y: 60
 
 Weitere Optionen: `title`, `language` (`auto`, `de`, `en`), `max_width` (Standard 420), `dashboard_link` (Standard `/energy`), `dashboard_link_text`, `image_x`, `image_y`, `anchor_battery_x`, `anchor_battery_y`, `solar_max`, `grid_max`.
 
+## Energie Auswertung (Pro)
+
+Die zweite Karte `custom:energie-dashboard-auswertung-card` steckt in derselben Datei, eine Ressource reicht für beide. Sie ist für einen eigenen Dashboard-Tab gedacht (Ansichtstyp **Panel** empfohlen).
+
+<img src="docs/auswertung.png" width="700" alt="Energie Auswertung mit Beispielwerten">
+
+*Vorschau mit Beispielwerten.*
+
+**Was sie zeigt:**
+- Einspeisung heute, diese Woche, diesen Monat und als Balken für 30 Tage
+- Akku rein/raus und Verlust (gleiche Rechnung wie in der Hauptkarte, Prozent von „rein“)
+- Verlauf von Netz, Akku-Ausgang, Akku rein/raus und Haus mit Nulllinien, auch für einen gewählten Tag (Kalender) und als Woche/Monat
+- Regelverhalten: Reaktionszeit und Ausregelzeit nach Lastsprüngen, Anteil der Zeit im Toleranzband, Einspeise-Spitzen mit Dauer
+- Tagestabelle; auf dem Handy seitlich wischbar, die erste Spalte bleibt stehen
+
+**Einrichtung:** genau wie bei der Hauptkarte. Karte hinzufügen, die Sensoren werden aus den Energie-Einstellungen vorgeschlagen, jeder Sensor ist im Editor frei wählbar, und die Prüfliste zeigt, was funktioniert. Zusätzlich gibt es im Editor den Bereich **Auswertung und Speichern**.
+
+**Bitte vorher lesen, wo die Grenzen liegen:**
+
+| Punkt | Was das bedeutet |
+|---|---|
+| Speichern nur mit Zustimmung | Mit **Auswertung in Home Assistant speichern** (`store_statistics: true`) speichert die Karte beim Öffnen für jeden abgeschlossenen Tag Auswertungswerte als Langzeitstatistik `energie_auswertung:*`. **Ohne diesen Schalter schreibt sie nichts** in Home Assistant und zeigt nur, was die Rohdaten hergeben. |
+| Nicht dauerhaft rückwirkend | Ausgewertet werden nur Tage, für die Home Assistant noch Sekundenwerte hat (`raw_days`, passend zu `recorder: purge_keep_days`, Standard 10). Wird die Karte länger nicht geöffnet, fehlen diese Tage. |
+| Schneller Netz-Sensor nötig | Reaktionszeiten sind nur mit etwa einem Netzwert pro Sekunde sinnvoll. Die Karte misst den Takt und blendet Reaktions- und Ausregelzeiten aus, wenn der Sensor seltener liefert (`max_rate_s`, Standard 2,5 s). |
+| Nur mit geregeltem Akku | Der Teil „Wie schnell wird geregelt?“ ist nur für Akkus mit Nulleinspeisungs-Regelung sinnvoll. Ohne Akku oder mit `show_regulation: false` bleiben Einspeisung, Akku-Bilanz und Verlauf. |
+| Grenzwerte anpassen | `band_w` (Toleranzband, Standard 50 W), `jump_w` (Lastsprung ab, Standard 120 W), `inverter_max_w` (Höchstleistung des Speichers, Standard 800 W). Die „vermutete Ursache“ von Spitzen (`show_cause`) ist nur ein grober Anhaltspunkt und standardmäßig aus. |
+
+**Gespeicherte Werte löschen:** im Karteneditor unter **Gespeicherte Auswertung** › **Gespeicherte Auswertungswerte löschen**, oder unter **Entwicklerwerkzeuge › Statistik** nach „Energie Auswertung“ suchen und die Einträge löschen. Danach den Schalter ausschalten, sonst legt die Karte sie beim nächsten Öffnen neu an.
+
+Beispiel:
+
+```yaml
+type: custom:energie-dashboard-auswertung-card
+grid_power: sensor.grid_power
+grid_import_energy: sensor.grid_import
+grid_export_energy: sensor.grid_export
+battery_power: sensor.battery_power
+battery_soc: sensor.battery_soc
+battery_capacity: 2.56
+battery_energy_in: sensor.battery_in
+battery_energy_out: sensor.battery_out
+store_statistics: false   # erst nach bewusster Entscheidung auf true
+raw_days: 10
+band_w: 50
+jump_w: 120
+inverter_max_w: 800
+```
+
+Weitere Optionen: `start_date` (Auswertung ab, z. B. nach Zählerwechsel), `output_power` (Ausgang, mit dem der Speicher regelt, wenn er sich von der Entladeleistung unterscheidet), `show_cause`, `max_rate_s`, `title`, `language`.
+
+## Ausprobieren ohne eigenes Home Assistant (GitHub Codespaces)
+
+[![In GitHub Codespaces öffnen](https://github.com/codespaces/badge.svg)](https://codespaces.new/tlangfe/Energie-Dashboard?quickstart=1)
+
+1. Auf den Knopf klicken und **Create codespace** wählen (GitHub-Konto nötig; Codespaces hat ein kostenloses Monatskontingent).
+2. Warten, bis im Terminal `[energie-test] Fertig.` steht. Home Assistant öffnet sich in einem neuen Tab (sonst: **Ports** › **Home Assistant (8123)** › Globus).
+3. Anmelden mit **test** / **test1234** und links **Energie Test** wählen.
+
+Der Codespace startet ein Test-Home-Assistant mit Schiebereglern für Solar, Hausverbrauch, Akku, Ladestand, Gas und Wasser, daraus berechneten Sensoren mit passender `device_class` und `state_class`, eingetragenen Energie-Einstellungen, beiden Karten und 48 Stunden Beispiel-Statistik. Alles steht in [`.devcontainer/`](.devcontainer). Lokal funktioniert dasselbe mit VS Code und der Erweiterung „Dev Containers“ (**Reopen in Container**).
+
 ## Neue Version zuerst testen, das Original behalten
 
 Die Karte heißt `custom:energie-dashboard-card`. Ältere, selbst gebaute Karten mit anderem Namen laufen daneben weiter.
@@ -195,7 +256,7 @@ node tools/ha-dashboard.mjs zurueck --dashboard lovelace
 
 - **Ein Tageswert bleibt leer (–):** Der Zähler braucht eine Langzeitstatistik, also `state_class: total_increasing` oder `total` und eine Energie- bzw. Volumeneinheit. Die Prüfliste zeigt das mit ⚠ an. Nach dem Einrichten eines neuen Zählers erscheinen die Werte nach der ersten vollen Stunde.
 - **Pfeile laufen falsch herum:** Unter **Strom** bzw. **Akku** die Option **Vorzeichen umdrehen** einschalten.
-- **Die Karte zeigt nach einem Update noch die alte Version:** Bei HACS die Seite neu laden (in der App: Einstellungen › Companion App › Debugging › Frontend-Cache leeren). Bei manueller Installation die Zahl hinter `?v=` in der Ressource erhöhen. Die geladene Version steht in der Browser-Konsole: `ENERGIE-DASHBOARD-CARD 1.0.0-beta.1`.
+- **Die Karte zeigt nach einem Update noch die alte Version:** Bei HACS die Seite neu laden (in der App: Einstellungen › Companion App › Debugging › Frontend-Cache leeren). Bei manueller Installation die Zahl hinter `?v=` in der Ressource erhöhen. Die geladene Version steht in der Browser-Konsole: `ENERGIE-DASHBOARD-CARD 1.0.0-beta.2`.
 - **„Sensor nicht gefunden“ auf der Karte:** Der eingetragene Sensor existiert nicht (mehr). Im Editor einen anderen wählen.
 - **Das eigene Bild fehlt:** Die Karte zeigt dann das Beispielhaus und einen Hinweis. Pfad prüfen oder das Bild erneut hochladen.
 
@@ -209,7 +270,7 @@ node tools/ha-dashboard.mjs zurueck --dashboard lovelace
 
 ## Versionen
 
-Alle Änderungen stehen im [CHANGELOG](CHANGELOG.md). Releases entstehen automatisch aus Git-Tags (`v1.0.0`). Tags mit Bindestrich (`v1.0.0-beta.1`) erscheinen als Vorab-Version.
+Alle Änderungen stehen im [CHANGELOG](CHANGELOG.md). Releases entstehen automatisch aus Git-Tags (`v1.0.0`). Tags mit Bindestrich (`v1.0.0-beta.2`) erscheinen als Vorab-Version.
 
 ## Lizenz
 

@@ -1,0 +1,252 @@
+# Test-Home-Assistant fuer die Energie Dashboard Card (nur fuer Codespaces/Dev Container).
+# Alle Werte sind Beispielwerte und werden ueber Schieberegler gesteuert.
+default_config:
+
+homeassistant:
+  name: Beispielhaus
+  latitude: 52.52
+  longitude: 13.40
+  elevation: 30
+  unit_system: metric
+  time_zone: Europe/Berlin
+  country: DE
+  currency: EUR
+  language: de
+  media_dirs:
+    local: /config/media
+
+# Codespaces leitet ueber einen Proxy weiter und setzt X-Forwarded-For
+http:
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - 127.0.0.1
+    - ::1
+    - 172.16.0.0/12
+    - 10.0.0.0/8
+    - 192.168.0.0/16
+
+recorder:
+  purge_keep_days: 10
+  commit_interval: 5
+
+input_number:
+  test_solar:
+    name: "Test: Solar"
+    icon: mdi:solar-power-variant
+    min: 0
+    max: 3000
+    step: 10
+    initial: 420
+    unit_of_measurement: W
+  test_haus:
+    name: "Test: Hausverbrauch"
+    icon: mdi:home-lightning-bolt-outline
+    min: 0
+    max: 5000
+    step: 10
+    initial: 215
+    unit_of_measurement: W
+  test_akku:
+    name: "Test: Akku (+ entladen, − laden)"
+    icon: mdi:battery-charging
+    min: -2000
+    max: 2000
+    step: 10
+    initial: -240
+    unit_of_measurement: W
+  test_ladestand:
+    name: "Test: Ladestand"
+    icon: mdi:battery-60
+    min: 0
+    max: 100
+    step: 1
+    initial: 62
+    unit_of_measurement: "%"
+  test_gas_durchfluss:
+    name: "Test: Gas-Durchfluss"
+    icon: mdi:fire
+    min: 0
+    max: 5
+    step: 0.1
+    initial: 0.4
+    unit_of_measurement: "m³/h"
+  test_wasser_durchfluss:
+    name: "Test: Wasser-Durchfluss"
+    icon: mdi:water
+    min: 0
+    max: 30
+    step: 0.5
+    initial: 0
+    unit_of_measurement: "L/min"
+
+template:
+  - sensor:
+      # Leistung (W): Netz = Haus - Solar - Akku, + Bezug / - Einspeisung
+      - name: Test Netz Leistung
+        unique_id: test_netz_leistung
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        state: "{{ (states('input_number.test_haus')|float(0) - states('input_number.test_solar')|float(0) - states('input_number.test_akku')|float(0)) | round(0) }}"
+      - name: Test Solar Leistung
+        unique_id: test_solar_leistung
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        state: "{{ states('input_number.test_solar')|float(0) | round(0) }}"
+      - name: Test Akku Leistung
+        unique_id: test_akku_leistung
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        state: "{{ states('input_number.test_akku')|float(0) | round(0) }}"
+      - name: Test Akku Ladestand
+        unique_id: test_akku_ladestand
+        unit_of_measurement: "%"
+        device_class: battery
+        state_class: measurement
+        state: "{{ states('input_number.test_ladestand')|float(0) | round(0) }}"
+      - name: Test Gas Durchfluss
+        unique_id: test_gas_durchfluss
+        unit_of_measurement: "m³/h"
+        device_class: volume_flow_rate
+        state_class: measurement
+        state: "{{ states('input_number.test_gas_durchfluss')|float(0) }}"
+      - name: Test Wasser Durchfluss
+        unique_id: test_wasser_durchfluss
+        unit_of_measurement: "L/min"
+        device_class: volume_flow_rate
+        state_class: measurement
+        state: "{{ states('input_number.test_wasser_durchfluss')|float(0) }}"
+      # Hilfsgroessen fuer die Zaehler (immer positiv)
+      - name: Test Netz Bezug Leistung
+        unique_id: test_netz_bezug_leistung
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        state: "{{ [states('sensor.test_netz_leistung')|float(0), 0]|max }}"
+      - name: Test Netz Einspeisung Leistung
+        unique_id: test_netz_einspeisung_leistung
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        state: "{{ [-(states('sensor.test_netz_leistung')|float(0)), 0]|max }}"
+      - name: Test Akku Ladeleistung
+        unique_id: test_akku_ladeleistung
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        state: "{{ [-(states('sensor.test_akku_leistung')|float(0)), 0]|max }}"
+      - name: Test Akku Entladeleistung
+        unique_id: test_akku_entladeleistung
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        state: "{{ [states('sensor.test_akku_leistung')|float(0), 0]|max }}"
+      # Zaehler mit passender device_class und state_class fuer das Energie-Dashboard
+      - name: Test Netz Bezug
+        unique_id: test_netz_bezug
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        state: "{{ states('sensor.test_integral_netz_bezug')|float(0) | round(3) }}"
+      - name: Test Netz Einspeisung
+        unique_id: test_netz_einspeisung
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        state: "{{ states('sensor.test_integral_netz_einspeisung')|float(0) | round(3) }}"
+      - name: Test Solar Energie
+        unique_id: test_solar_energie
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        state: "{{ states('sensor.test_integral_solar')|float(0) | round(3) }}"
+      - name: Test Akku rein
+        unique_id: test_akku_rein
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        state: "{{ states('sensor.test_integral_akku_rein')|float(0) | round(3) }}"
+      - name: Test Akku raus
+        unique_id: test_akku_raus
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        state: "{{ states('sensor.test_integral_akku_raus')|float(0) | round(3) }}"
+      - name: Test Gaszaehler
+        unique_id: test_gaszaehler
+        unit_of_measurement: "m³"
+        device_class: gas
+        state_class: total_increasing
+        state: "{{ states('sensor.test_integral_gas')|float(0) | round(3) }}"
+      - name: Test Wasserzaehler
+        unique_id: test_wasserzaehler
+        unit_of_measurement: "m³"
+        device_class: water
+        state_class: total_increasing
+        state: "{{ (states('sensor.test_integral_wasser')|float(0) / 1000) | round(4) }}"
+
+# Aus Leistung bzw. Durchfluss aufsummierte Werte (Riemann-Summe), Grundlage der Zaehler oben
+sensor:
+  - platform: integration
+    source: sensor.test_netz_bezug_leistung
+    name: Test Integral Netz Bezug
+    unique_id: test_integral_netz_bezug
+    unit_prefix: k
+    unit_time: h
+    method: left
+    round: 4
+    max_sub_interval: { seconds: 30 }
+  - platform: integration
+    source: sensor.test_netz_einspeisung_leistung
+    name: Test Integral Netz Einspeisung
+    unique_id: test_integral_netz_einspeisung
+    unit_prefix: k
+    unit_time: h
+    method: left
+    round: 4
+    max_sub_interval: { seconds: 30 }
+  - platform: integration
+    source: sensor.test_solar_leistung
+    name: Test Integral Solar
+    unique_id: test_integral_solar
+    unit_prefix: k
+    unit_time: h
+    method: left
+    round: 4
+    max_sub_interval: { seconds: 30 }
+  - platform: integration
+    source: sensor.test_akku_ladeleistung
+    name: Test Integral Akku rein
+    unique_id: test_integral_akku_rein
+    unit_prefix: k
+    unit_time: h
+    method: left
+    round: 4
+    max_sub_interval: { seconds: 30 }
+  - platform: integration
+    source: sensor.test_akku_entladeleistung
+    name: Test Integral Akku raus
+    unique_id: test_integral_akku_raus
+    unit_prefix: k
+    unit_time: h
+    method: left
+    round: 4
+    max_sub_interval: { seconds: 30 }
+  - platform: integration
+    source: sensor.test_gas_durchfluss
+    name: Test Integral Gas
+    unique_id: test_integral_gas
+    unit_time: h
+    method: left
+    round: 4
+    max_sub_interval: { seconds: 30 }
+  - platform: integration
+    source: sensor.test_wasser_durchfluss
+    name: Test Integral Wasser
+    unique_id: test_integral_wasser
+    unit_time: min
+    method: left
+    round: 4
+    max_sub_interval: { seconds: 30 }

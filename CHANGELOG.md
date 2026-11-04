@@ -5,6 +5,20 @@ Alle Änderungen stehen hier. Versionen mit Bindestrich (z. B. `1.0.0-beta.1`) s
 
 ## [Unreleased]
 
+## [1.0.0-beta.2] - 2026-11-04
+
+### Added / Neu
+- Second card **Energie Auswertung (Pro)** `custom:energie-dashboard-auswertung-card` in the same file: export per day/week/month, battery in/out and loss, history of grid, battery and home (also by calendar day, week, month), regulation behaviour (reaction and settling time after load steps, time inside tolerance band, export peaks) and a daily table.
+- The analysis writes long-term statistics (`energie_auswertung:*`) **only** with `store_statistics: true` (consent switch in the editor); stored values can be deleted from the editor.
+- Grid sensor rate is measured; reaction times are hidden for sensors slower than `max_rate_s`.
+- New options for the analysis: `raw_days`, `start_date`, `band_w`, `jump_w`, `inverter_max_w`, `output_power`, `show_regulation`, `show_cause`, `max_rate_s`.
+- `.devcontainer/` for GitHub Codespaces: test Home Assistant with sliders, template sensors, energy settings, both cards and example statistics.
+- Event tables show the 20 newest entries.
+
+### Changed / Geändert
+- Loss is calculated the same way in both cards (in − out − change of content, percent of “in”).
+
+
 ## [1.0.0-beta.1] - 2026-11-04
 
 First public pre-release. Erste öffentliche Vorab-Version.
@@ -26,5 +40,6 @@ First public pre-release. Erste öffentliche Vorab-Version.
 ### History before this repository / Vorgeschichte
 - Up to v31 (`energie-haus-card`, private): single-house card with fixed sensors, fixed flow paths and template helpers. Not published.
 
-[Unreleased]: https://github.com/tlangfe/energie-dashboard/compare/v1.0.0-beta.1...HEAD
+[Unreleased]: https://github.com/tlangfe/energie-dashboard/compare/v1.0.0-beta.2...HEAD
+[1.0.0-beta.2]: https://github.com/tlangfe/energie-dashboard/releases/tag/v1.0.0-beta.2
 [1.0.0-beta.1]: https://github.com/tlangfe/energie-dashboard/releases/tag/v1.0.0-beta.1

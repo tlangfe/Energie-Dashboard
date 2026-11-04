@@ -22,7 +22,8 @@ A compact, dark Lovelace card for Home Assistant. Your house floats as an island
 - **Your own house:** upload a picture (stored in Home Assistant media), set shape, size, position and anchor points.
 - **Calm animation:** exactly one slow bubble per line, speed depends on the power. Respects `prefers-reduced-motion`.
 - **German and English,** numbers and times formatted per language.
-- **One single file,** no dependencies.
+- **One single file,** no dependencies, with two cards: the main card and the [Energie Auswertung (Pro)](#energie-auswertung-pro).
+- **Try it without your own HA** in [GitHub Codespaces](#try-it-without-your-own-home-assistant-github-codespaces).
 
 ## Installation
 
@@ -37,7 +38,7 @@ A compact, dark Lovelace card for Home Assistant. Your house floats as an island
 ### Manual
 
 1. Copy `dist/energie-dashboard-card.js` from the [latest release](https://github.com/tlangfe/energie-dashboard/releases) to `/config/www/`.
-2. **Settings › Dashboards › ⋮ › Resources › Add resource**: URL `/local/energie-dashboard-card.js?v=1.0.0-beta.1`, type **JavaScript module**.
+2. **Settings › Dashboards › ⋮ › Resources › Add resource**: URL `/local/energie-dashboard-card.js?v=1.0.0-beta.2`, type **JavaScript module**.
 3. Reload the browser page. Increase the number after `?v=` with every update so browsers and the app load the new file.
 
 ## First setup
@@ -151,6 +152,42 @@ image_shape: circle
 
 More options: `title`, `language` (`auto`, `de`, `en`), `max_width` (default 420), `dashboard_link` (default `/energy`), `dashboard_link_text`, `image_size`, `image_x`, `image_y`, `anchor_solar_x`, `anchor_solar_y`, `anchor_battery_x`, `anchor_battery_y`, `anchor_home_x`, `anchor_home_y`, `solar_max`, `grid_max`.
 
+## Energie Auswertung (Pro)
+
+The second card `custom:energie-dashboard-auswertung-card` lives in the same file, so one resource serves both. It is meant for its own dashboard tab (view type **Panel** recommended).
+
+<img src="docs/auswertung.png" width="700" alt="Energy analysis with example values">
+
+*Preview with example values.*
+
+**What it shows:** export today / this week / this month and as bars for 30 days; battery in/out and loss (same calculation as the main card, percent of “in”); history of grid, battery output, battery in/out and home with zero lines, also for a chosen day and as week/month; regulation behaviour (reaction and settling time after load steps, share of time inside the tolerance band, export peaks with duration); a daily table that can be swiped sideways on phones.
+
+**Setup:** exactly like the main card (detection from the energy settings as a suggestion, every sensor selectable, checklist). The editor has an extra section **Analysis and saving**.
+
+**Limits — please read:**
+
+| Topic | What it means |
+|---|---|
+| Saving only with consent | With **Save analysis in Home Assistant** (`store_statistics: true`) the card stores analysis values for every completed day as long-term statistics `energie_auswertung:*` when it is opened. **Without this switch it writes nothing** and only shows what the raw data provides. |
+| Not permanently retroactive | Only days for which Home Assistant still has second values are analysed (`raw_days`, matching `recorder: purge_keep_days`, default 10). If the card is not opened for longer, those days are missing. |
+| Fast grid sensor needed | Reaction times only make sense with about one grid value per second. The card measures the rate and hides reaction/settling times if the sensor reports less often (`max_rate_s`, default 2.5 s). |
+| Only with regulated batteries | “How fast is it regulated?” is only meaningful for batteries with zero-export regulation. Without a battery or with `show_regulation: false`, export, battery balance and history remain. |
+| Adjust thresholds | `band_w` (tolerance band, default 50 W), `jump_w` (load step from, default 120 W), `inverter_max_w` (storage maximum power, default 800 W). The “probable cause” of peaks (`show_cause`) is only a rough hint and off by default. |
+
+**Delete stored values:** in the card editor under **Stored analysis** › **Delete stored analysis values**, or under **Developer tools › Statistics** (search “Energie Auswertung”). Turn the switch off afterwards, otherwise the card recreates them.
+
+More options: `start_date`, `output_power`, `show_cause`, `max_rate_s`, `title`, `language`.
+
+## Try it without your own Home Assistant (GitHub Codespaces)
+
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/tlangfe/Energie-Dashboard?quickstart=1)
+
+1. Click the button and choose **Create codespace** (GitHub account needed; Codespaces has a free monthly quota).
+2. Wait until the terminal shows `[energie-test] Fertig.` Home Assistant opens in a new tab (otherwise: **Ports** › **Home Assistant (8123)** › globe icon).
+3. Log in with **test** / **test1234** and choose **Energie Test** on the left.
+
+The codespace starts a test Home Assistant with sliders for solar, home consumption, battery, state of charge, gas and water, sensors derived from them with matching `device_class` and `state_class`, prefilled energy settings, both cards and 48 hours of example statistics. Everything is in [`.devcontainer/`](.devcontainer). Locally the same works with VS Code and the “Dev Containers” extension (**Reopen in Container**).
+
 ## Try a new version first, keep the original
 
 The card is called `custom:energie-dashboard-card`, so older self-made cards with another name keep working next to it. Create a new dashboard (**Settings › Dashboards › Add dashboard**), try the card there, and only then add it to your main dashboard (back up the main dashboard first via ⋮ › **Raw configuration editor**).
@@ -161,7 +198,7 @@ Optional helper: `tools/ha-dashboard.mjs` (Node 22, long-lived token) creates a 
 
 - **A daily value stays empty (–):** the meter needs long-term statistics (`state_class: total_increasing` or `total` and an energy/volume unit). The checklist shows this with ⚠. New meters show values after the first full hour.
 - **Arrows point the wrong way:** turn on **Invert sign** under **Power** or **Battery**.
-- **The card still shows the old version after an update:** reload the page (in the app: Settings › Companion App › Debugging › Reset frontend cache). For manual installs, increase `?v=` in the resource. The loaded version is printed in the browser console: `ENERGIE-DASHBOARD-CARD 1.0.0-beta.1`.
+- **The card still shows the old version after an update:** reload the page (in the app: Settings › Companion App › Debugging › Reset frontend cache). For manual installs, increase `?v=` in the resource. The loaded version is printed in the browser console: `ENERGIE-DASHBOARD-CARD 1.0.0-beta.2`.
 - **“Sensor not found” on the card:** the selected sensor does not exist (any more). Pick another in the editor.
 - **Own image missing:** the card shows the example house and a note. Check the path or upload again.
 
@@ -175,7 +212,7 @@ Optional helper: `tools/ha-dashboard.mjs` (Node 22, long-lived token) creates a 
 
 ## Versions
 
-See the [CHANGELOG](CHANGELOG.md). Releases are created automatically from git tags (`v1.0.0`); tags with a hyphen (`v1.0.0-beta.1`) are published as pre-releases.
+See the [CHANGELOG](CHANGELOG.md). Releases are created automatically from git tags (`v1.0.0`); tags with a hyphen (`v1.0.0-beta.2`) are published as pre-releases.
 
 ## License
 
