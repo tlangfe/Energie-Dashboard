@@ -1,11 +1,14 @@
 name: Release
 
-# Neue Version: VERSION in dist/energie-dashboard-card.js und CHANGELOG.md anpassen, dann Tag "v<Version>" pushen.
+# Neue Version: VERSION in dist/energie-dashboard-card.js und CHANGELOG.md anpassen, dann auf GitHub ein Release mit Tag "v<Version>" anlegen
+# (oder den Tag pushen). Die Kartendatei wird automatisch angehaengt.
 # Tags mit Bindestrich (z. B. v1.0.0-beta.1) werden als Vorab-Version veroeffentlicht.
 on:
   push:
     tags:
       - "v*"
+  release:
+    types: [published]
 
 permissions:
   contents: write
@@ -26,4 +29,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           PRE=""; case "${GITHUB_REF_NAME}" in *-*) PRE="--prerelease";; esac
-          gh release create "${GITHUB_REF_NAME}" dist/energie-dashboard-card.js --title "${GITHUB_REF_NAME}" --notes-file notes.md $PRE
+          # Release schon auf der GitHub-Webseite angelegt? Dann nur die Kartendatei anhaengen.
+          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            gh release upload "${GITHUB_REF_NAME}" dist/energie-dashboard-card.js --clobber
+          else
+            gh release create "${GITHUB_REF_NAME}" dist/energie-dashboard-card.js --title "${GITHUB_REF_NAME}" --notes-file notes.md $PRE
+          fi
