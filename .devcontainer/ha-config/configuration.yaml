@@ -14,8 +14,10 @@ homeassistant:
   language: de
   # Medienordner: im Container automatisch /media (siehe docker-compose.yml)
 
-# Codespaces leitet ueber einen Proxy weiter und setzt X-Forwarded-For
+# HA lauscht auf 8125. Davor sitzt .devcontainer/proxy.mjs auf 8123 und entfernt die X-Forwarded-*-Kopfzeilen
+# des GitHub-Weiterleitungs-Proxys (sonst antwortet HA mit "400: Bad Request").
 http:
+  server_port: 8125
   use_x_forwarded_for: true
   trusted_proxies:
     - 127.0.0.1

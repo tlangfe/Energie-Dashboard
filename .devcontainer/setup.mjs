@@ -3,9 +3,12 @@
 // 1. wartet auf Home Assistant, 2. Ersteinrichtung mit Testbenutzer, 3. Energie-Einstellungen,
 // 4. Ressource der Karte, 5. Dashboard "Energie Test", 6. zwei Tage Beispiel-Statistik (einmalig).
 // Nur fuer die Testumgebung gedacht, nicht fuer ein echtes Home Assistant.
-import { statSync, readFileSync, existsSync } from 'node:fs';
+import { statSync, readFileSync, existsSync, openSync } from 'node:fs';
+import { spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
-const HA = 'http://localhost:8123', CLIENT = `${HA}/`, USER = 'test', PASS = 'test1234';
+// HA selbst lauscht auf 8125, der Zwischen-Proxy (proxy.mjs) auf 8123; geoeffnet wird 8123
+const HA = 'http://127.0.0.1:8125', ALT = 'http://127.0.0.1:8123', CLIENT = 'http://localhost:8123/', USER = 'test', PASS = 'test1234';
 const KARTE = new URL('../dist/energie-dashboard-card.js', import.meta.url);
 const log = m => console.log(`[energie-test] ${m}`);
 const HA_LOG = new URL('./ha-config/home-assistant.log', import.meta.url);
@@ -20,20 +23,39 @@ function protokoll(n = 40) {
 if (process.argv[2] === 'log') { protokoll(80); process.exit(0); }
 const warte = ms => new Promise(r => setTimeout(r, ms));
 
-async function json(pfad, opt = {}) {
-  const r = await fetch(HA + pfad, opt); const t = await r.text();
+async function json(pfad, opt = {}, basis = HA) {
+  const r = await fetch(basis + pfad, opt); const t = await r.text();
   if (!r.ok) throw new Error(`${opt.method || 'GET'} ${pfad}: ${r.status} ${t.slice(0, 200)}`);
   try { return JSON.parse(t); } catch { return t; }
 }
-async function token(code) {
+async function token(code, basis = HA) {
   const body = new URLSearchParams({ grant_type: 'authorization_code', code, client_id: CLIENT });
-  return (await json('/auth/token', { method: 'POST', body })).access_token;
+  return (await json('/auth/token', { method: 'POST', body }, basis)).access_token;
 }
-async function anmelden() {
-  const f = await json('/auth/login_flow', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ client_id: CLIENT, handler: ['homeassistant', null], redirect_uri: CLIENT }) });
-  const r = await json(`/auth/login_flow/${f.flow_id}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ client_id: CLIENT, username: USER, password: PASS }) });
+async function anmelden(basis = HA) {
+  const f = await json('/auth/login_flow', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ client_id: CLIENT, handler: ['homeassistant', null], redirect_uri: CLIENT }) }, basis);
+  const r = await json(`/auth/login_flow/${f.flow_id}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ client_id: CLIENT, username: USER, password: PASS }) }, basis);
   if (r.type !== 'create_entry') throw new Error('Anmeldung als Testbenutzer fehlgeschlagen (Passwort geaendert?)');
-  return token(r.result);
+  return token(r.result, basis);
+}
+// Wer antwortet auf einem Port? null = niemand, 'proxy' = unser Zwischen-Proxy, 'ha' = Home Assistant direkt
+async function wer(basis) {
+  try { const r = await fetch(basis + '/manifest.json', { signal: AbortSignal.timeout(3000) }); return r.headers.get('x-energie-proxy') ? 'proxy' : 'ha'; } catch { return null; }
+}
+// Zwischen-Proxy auf 8123 starten (laeuft im Hintergrund weiter)
+async function proxyStarten() {
+  if (await wer(ALT) === 'proxy') return;
+  const out = openSync(fileURLToPath(new URL('./ha-config/proxy.log', import.meta.url)), 'a');
+  spawn(process.execPath, [fileURLToPath(new URL('./proxy.mjs', import.meta.url))], { detached: true, stdio: ['ignore', out, out] }).unref();
+  await warte(800); if (await wer(ALT) === 'proxy') log('Zwischen-Proxy laeuft auf Port 8123');
+}
+// Aeltere Testumgebung: HA lief direkt auf 8123. Neu starten, damit es die neue Konfiguration (Port 8125) liest.
+async function altesHaUmstellen() {
+  if (await wer(HA) || await wer(ALT) !== 'ha') return;
+  log('Home Assistant laeuft noch auf Port 8123 (alte Einstellung), starte es neu …');
+  try { const tok = await anmelden(ALT); await fetch(ALT + '/api/services/homeassistant/restart', { method: 'POST', headers: { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json' }, body: '{}' }).catch(() => {}); }
+  catch (e) { log('Neustart nicht moeglich: ' + e.message + ' – bitte F1 › "Codespaces: Rebuild Container".'); return; }
+  for (let i = 0; i < 60 && await wer(ALT) === 'ha'; i++) await warte(2000);
 }
 async function ersteinrichtung() {
   let schritte;
@@ -123,7 +145,9 @@ async function statistik(ha) {
   log('Beispiel-Statistik fuer 48 Stunden eingespielt');
 }
 try {
+  await altesHaUmstellen(); await proxyStarten();
   const tok = await ersteinrichtung(), ha = await verbinde(tok);
+  await proxyStarten();
   await energie(ha); await ressource(ha); await dashboard(ha); await statistik(ha); ha.zu();
   log('Fertig. Home Assistant oeffnen (Port 8123), anmelden mit test / test1234, links "Energie Test" waehlen.');
 } catch (e) { log('Fehler: ' + e.message); log('Hilfe: Protokoll anzeigen mit  node .devcontainer/setup.mjs log'); process.exitCode = 0; }

@@ -24,6 +24,16 @@ Das kommt von GitHub, nicht von Home Assistant: Der Port ist privat, und der Bro
 1. Den Tab einmal neu laden (F5). Im selben Browser öffnen, in dem du bei GitHub angemeldet bist.
 2. Hilft das nicht: unten **Ports** › rechte Maustaste auf **Home Assistant (8123)** › **Port Visibility** › **Public**, dann erneut das Globus-Symbol. Dann ist die HA-Anmeldeseite für jeden mit der Adresse erreichbar; nach dem Test den Codespace löschen oder den Port wieder auf **Private** stellen.
 
+## „400: Bad Request“
+
+Behoben ab dem Stand vom 05.11.2026: Home Assistant läuft intern auf Port 8125, davor sitzt `proxy.mjs` auf Port 8123 und entfernt die Weiterleitungs-Kopfzeilen von GitHub. Einen älteren Codespace aktualisierst du im Terminal mit:
+
+```bash
+git pull && node .devcontainer/setup.mjs
+```
+
+Das Skript startet Home Assistant dabei selbst neu. Danach die Seite neu laden.
+
 ## Wenn Home Assistant nicht startet
 
 1. Im Terminal unten eingeben und Enter drücken:

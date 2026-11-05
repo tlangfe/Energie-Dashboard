@@ -6,7 +6,8 @@
   "shutdownAction": "stopCompose",
   "forwardPorts": [8123],
   "portsAttributes": {
-    "8123": { "label": "Home Assistant", "onAutoForward": "openBrowser" }
+    "8123": { "label": "Home Assistant", "onAutoForward": "openBrowser" },
+    "8125": { "label": "HA intern (nicht öffnen)", "onAutoForward": "ignore" }
   },
   "postStartCommand": "node .devcontainer/setup.mjs",
   "hostRequirements": { "cpus": 2, "memory": "4gb" },
