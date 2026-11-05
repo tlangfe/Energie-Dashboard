@@ -218,7 +218,7 @@ Weitere Optionen: `start_date` (Auswertung ab, z. B. nach Zählerwechsel), `outp
 2. Warten, bis im Terminal `[energie-test] Fertig.` steht. Home Assistant öffnet sich in einem neuen Tab (sonst: **Ports** › **Home Assistant (8123)** › Globus).
 3. Anmelden mit **test** / **test1234** und links **Energie Test** wählen.
 
-**Startet HA nicht?** Im Codespace-Terminal `node .devcontainer/setup.mjs log` eingeben, das zeigt den Grund. Einen alten Codespace unter https://github.com/codespaces löschen und neu anlegen, dann hat er den neuesten Stand.
+**„HTTP ERROR 401“?** Seite neu laden; sonst unter **Ports** › rechte Maustaste auf **Home Assistant (8123)** › **Port Visibility** › **Public** (nach dem Test wieder auf Private stellen oder den Codespace löschen). **Startet HA nicht?** Im Codespace-Terminal `node .devcontainer/setup.mjs log` eingeben, das zeigt den Grund. Einen alten Codespace unter https://github.com/codespaces löschen und neu anlegen, dann hat er den neuesten Stand.
 
 Der Codespace startet ein Test-Home-Assistant mit Schiebereglern für Solar, Hausverbrauch, Akku, Ladestand, Gas und Wasser, daraus berechneten Sensoren mit passender `device_class` und `state_class`, eingetragenen Energie-Einstellungen, beiden Karten und 48 Stunden Beispiel-Statistik. Alles steht in [`.devcontainer/`](.devcontainer). Lokal funktioniert dasselbe mit VS Code und der Erweiterung „Dev Containers“ (**Reopen in Container**).
 

@@ -17,6 +17,13 @@ Hinweise:
 - Der Regelteil der Auswertung braucht einen Netz-Sensor mit etwa einem Wert pro Sekunde. Die Schieberegler ändern sich nur, wenn du sie bewegst, deshalb blendet die Karte die Reaktionszeiten hier aus.
 - Zugangsdaten und Laufzeitdateien gelten nur für diesen Test und werden nicht ins Repository übernommen.
 
+## „HTTP ERROR 401“ beim Öffnen
+
+Das kommt von GitHub, nicht von Home Assistant: Der Port ist privat, und der Browser hat keine GitHub-Anmeldung mitgeschickt.
+
+1. Den Tab einmal neu laden (F5). Im selben Browser öffnen, in dem du bei GitHub angemeldet bist.
+2. Hilft das nicht: unten **Ports** › rechte Maustaste auf **Home Assistant (8123)** › **Port Visibility** › **Public**, dann erneut das Globus-Symbol. Dann ist die HA-Anmeldeseite für jeden mit der Adresse erreichbar; nach dem Test den Codespace löschen oder den Port wieder auf **Private** stellen.
+
 ## Wenn Home Assistant nicht startet
 
 1. Im Terminal unten eingeben und Enter drücken:

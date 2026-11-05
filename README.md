@@ -186,7 +186,7 @@ More options: `start_date`, `output_power`, `show_cause`, `max_rate_s`, `title`,
 2. Wait until the terminal shows `[energie-test] Fertig.` Home Assistant opens in a new tab (otherwise: **Ports** › **Home Assistant (8123)** › globe icon).
 3. Log in with **test** / **test1234** and choose **Energie Test** on the left.
 
-**Home Assistant does not start?** Run `node .devcontainer/setup.mjs log` in the codespace terminal to see the reason. Delete an old codespace at https://github.com/codespaces and create a new one to get the latest version.
+**“HTTP ERROR 401”?** Reload the page; otherwise **Ports** › right-click **Home Assistant (8123)** › **Port Visibility** › **Public** (set it back to Private or delete the codespace after testing). **Home Assistant does not start?** Run `node .devcontainer/setup.mjs log` in the codespace terminal to see the reason. Delete an old codespace at https://github.com/codespaces and create a new one to get the latest version.
 
 The codespace starts a test Home Assistant with sliders for solar, home consumption, battery, state of charge, gas and water, sensors derived from them with matching `device_class` and `state_class`, prefilled energy settings, both cards and 48 hours of example statistics. Everything is in [`.devcontainer/`](.devcontainer). Locally the same works with VS Code and the “Dev Containers” extension (**Reopen in Container**).
 
