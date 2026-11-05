@@ -7,6 +7,8 @@ services:
       - TZ=Europe/Berlin
     volumes:
       - ./ha-config:/config
+      # Medienordner fuer den Bild-Upload der Karte (Docker legt ihn beim Start an)
+      - ./ha-media:/media
       # Kartendatei direkt aus dem Repository, damit Aenderungen nach dem Neuladen sichtbar sind
       - ../dist:/config/www/energie-dashboard-card:ro
 

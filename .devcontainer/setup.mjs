@@ -3,11 +3,21 @@
 // 1. wartet auf Home Assistant, 2. Ersteinrichtung mit Testbenutzer, 3. Energie-Einstellungen,
 // 4. Ressource der Karte, 5. Dashboard "Energie Test", 6. zwei Tage Beispiel-Statistik (einmalig).
 // Nur fuer die Testumgebung gedacht, nicht fuer ein echtes Home Assistant.
-import { statSync } from 'node:fs';
+import { statSync, readFileSync, existsSync } from 'node:fs';
 
 const HA = 'http://localhost:8123', CLIENT = `${HA}/`, USER = 'test', PASS = 'test1234';
 const KARTE = new URL('../dist/energie-dashboard-card.js', import.meta.url);
 const log = m => console.log(`[energie-test] ${m}`);
+const HA_LOG = new URL('./ha-config/home-assistant.log', import.meta.url);
+// Letzte Zeilen des HA-Protokolls und der wahrscheinliche Grund, wenn HA nicht hochkommt
+function protokoll(n = 40) {
+  if (!existsSync(HA_LOG)) { log('Noch kein Protokoll von Home Assistant (.devcontainer/ha-config/home-assistant.log). Der Container startet vermutlich noch oder wurde nicht gestartet.'); return; }
+  const z = readFileSync(HA_LOG, 'utf8').split('\n');
+  const grund = z.filter(l => /Invalid config|recovery mode|safe mode|ERROR \(MainThread\) \[homeassistant\.(bootstrap|config|core_config)\]/i.test(l)).slice(-5);
+  if (grund.length) { log('Wahrscheinlicher Grund:'); grund.forEach(l => console.log('  ' + l.slice(0, 300))); }
+  log(`Letzte ${n} Zeilen aus .devcontainer/ha-config/home-assistant.log:`); z.slice(-n).forEach(l => console.log('  ' + l.slice(0, 300)));
+}
+if (process.argv[2] === 'log') { protokoll(80); process.exit(0); }
 const warte = ms => new Promise(r => setTimeout(r, ms));
 
 async function json(pfad, opt = {}) {
@@ -27,8 +37,16 @@ async function anmelden() {
 }
 async function ersteinrichtung() {
   let schritte;
-  for (let i = 0; i < 120; i++) { try { schritte = await json('/api/onboarding'); break; } catch { if (i % 6 === 0) log('warte auf Home Assistant …'); await warte(5000); } }
-  if (!schritte) throw new Error('Home Assistant antwortet nicht. Log: docker compose logs homeassistant');
+  for (let i = 0; i < 120; i++) {
+    try { schritte = await json('/api/onboarding'); break; }
+    catch (e) {
+      if (i % 6 === 0) log(`warte auf Home Assistant … (${i * 5} s${/404/.test(e.message) ? ', HA antwortet, aber ohne Ersteinrichtung' : ''})`);
+      if (i === 36) protokoll(15);
+      await warte(5000);
+    }
+  }
+  if (!schritte) { protokoll(); throw new Error('Home Assistant ist nach 10 Minuten nicht bereit. Protokoll oben; erneut versuchen: node .devcontainer/setup.mjs'); }
+  if (!Array.isArray(schritte)) { protokoll(); throw new Error('Home Assistant laeuft im Notfallmodus (Konfiguration ungueltig). Protokoll oben.'); }
   const offen = s => schritte.some(x => x.step === s && !x.done);
   let tok;
   if (offen('user')) {
@@ -108,4 +126,4 @@ try {
   const tok = await ersteinrichtung(), ha = await verbinde(tok);
   await energie(ha); await ressource(ha); await dashboard(ha); await statistik(ha); ha.zu();
   log('Fertig. Home Assistant oeffnen (Port 8123), anmelden mit test / test1234, links "Energie Test" waehlen.');
-} catch (e) { log('Fehler: ' + e.message); process.exitCode = 0; }
+} catch (e) { log('Fehler: ' + e.message); log('Hilfe: Protokoll anzeigen mit  node .devcontainer/setup.mjs log'); process.exitCode = 0; }

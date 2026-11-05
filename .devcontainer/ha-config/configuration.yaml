@@ -12,8 +12,7 @@ homeassistant:
   country: DE
   currency: EUR
   language: de
-  media_dirs:
-    local: /config/media
+  # Medienordner: im Container automatisch /media (siehe docker-compose.yml)
 
 # Codespaces leitet ueber einen Proxy weiter und setzt X-Forwarded-For
 http:

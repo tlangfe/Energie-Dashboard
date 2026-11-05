@@ -7,3 +7,4 @@ sicherung-*.json
 # Laufzeitdateien des Test-Home-Assistant (Codespaces)
 .devcontainer/ha-config/*
 !.devcontainer/ha-config/configuration.yaml
+.devcontainer/ha-media/

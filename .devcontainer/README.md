@@ -16,3 +16,20 @@ Hinweise:
 - Die Tageswerte stammen anfangs aus eingespielten Beispielwerten der letzten 48 Stunden, danach aus den Schiebereglern.
 - Der Regelteil der Auswertung braucht einen Netz-Sensor mit etwa einem Wert pro Sekunde. Die Schieberegler ändern sich nur, wenn du sie bewegst, deshalb blendet die Karte die Reaktionszeiten hier aus.
 - Zugangsdaten und Laufzeitdateien gelten nur für diesen Test und werden nicht ins Repository übernommen.
+
+## Wenn Home Assistant nicht startet
+
+1. Im Terminal unten eingeben und Enter drücken:
+
+   ```bash
+   node .devcontainer/setup.mjs log
+   ```
+
+   Das zeigt die letzten Zeilen des HA-Protokolls und, falls erkennbar, den Grund.
+2. Einrichtung erneut starten (wartet bis zu 10 Minuten auf HA):
+
+   ```bash
+   node .devcontainer/setup.mjs
+   ```
+
+3. Hilft das nicht: Codespace neu bauen mit **F1** › **Codespaces: Rebuild Container**, oder den Codespace unter https://github.com/codespaces löschen und über den Knopf in der README neu anlegen. Ein neu angelegter Codespace hat immer den neuesten Stand.
