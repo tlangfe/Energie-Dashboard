@@ -5,6 +5,11 @@ Alle Änderungen stehen hier. Versionen mit Bindestrich (z. B. `1.0.0-beta.1`) s
 
 ## [Unreleased]
 
+## [1.0.0-beta.4] - 2026-11-09
+
+### Fixed / Behoben
+- Uploaded house images were saved but not displayed (401 from Home Assistant, path contained `/./`); images that are already saved work again too. / Hochgeladene Hausbilder wurden gespeichert, aber nicht angezeigt; auch bereits gespeicherte Bilder gehen wieder.
+
 ## [1.0.0-beta.3] - 2026-11-09
 
 ### Added / Neu

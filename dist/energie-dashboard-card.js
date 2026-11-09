@@ -27,7 +27,7 @@ const FAKTOR = {
   energy: { Wh: 1e-3, kWh: 1, MWh: 1e3, GWh: 1e6 },
   volume: { 'm³': 1, m3: 1, L: 1e-3, l: 1e-3, 'ft³': 0.0283168, ft3: 0.0283168, CCF: 2.83168, gal: 0.00378541 },
 };
-const VERSION = '1.0.0-beta.3';
+const VERSION = '1.0.0-beta.4';
 const TXT = {
   de: {
     title: 'Energie', solar: 'Solar', akku: 'Akku', bezug: 'Bezug', eingespeist: 'eingespeist', gas: 'Gas', wasser: 'Wasser', heute: 'heute', Heute: 'Heute',
@@ -121,6 +121,8 @@ function tagesWert(zeilen, live, m) {
 const summeChange = (zeilen, von, bis) => { if (!zeilen || !zeilen.length) return null; let s = 0, n = 0; for (const z of zeilen) { const t = ts(z.start); if (t >= von && t < bis && istZahl(z.change)) { s += z.change; n++; } } return n ? Math.max(s, 0) : null; };
 // Bezug fuer die Prozentangabe: Ladung plus Entnahme aus dem Vorrat, sonst waere ein Tag, der den Vorrat vom Vortag abgibt, scheinbar 100 %
 const durchsatz = (rein, k0, k1) => [rein, k0, k1].every(istZahl) ? rein + Math.max(k0 - k1, 0) : null;
+// HA liefert beim Hochladen Pfade mit /./; die signierte Adresse dazu lehnt HA mit 401 ab
+const medienId = id => String(id).replace(/\/\.\//g, '/');
 const verlust = (rein, raus, k0, k1) => [rein, raus, k0, k1].every(istZahl) ? Math.max(rein - raus - (k1 - k0), 0) : null;
 
 // Kreise: feste Positionen in viewBox 0 0 1000 H
@@ -458,7 +460,7 @@ class EnergieDashboardCard extends HTMLElement {
   async _loeseMedia() {
     if (!this._hass || this._mediaLaeuft) return; const id = this._c.image; this._mediaLaeuft = true;
     try {
-      const r = await this._hass.callWS({ type: 'media_source/resolve_media', media_content_id: id, expires: 86400 });
+      const r = await this._hass.callWS({ type: 'media_source/resolve_media', media_content_id: medienId(id), expires: 86400 });
       if (id !== this._c.image) return;
       this._media = { id, url: r.url, zeit: Date.now() }; const img = this._e && this._e('bild'); if (img) img.src = r.url;
     } catch (e) { console.warn('energie-dashboard-card: image', e); if (id === this._c.image) { this._bildFehler = true; this._bau(); } }
@@ -1127,8 +1129,8 @@ class EnergieDashboardCardEditor extends HTMLElement {
       const r = await this._hass.fetchWithAuth('/api/media_source/local_source/upload', { method: 'POST', body: fd });
       if (!r.ok) throw new Error(r.status + ' ' + (await r.text()).slice(0, 200));
       const j = await r.json(); st.textContent = X.hochOk + ' ' + datei.name;
-      this._melde({ ...this._config, image: j.media_content_id });
-      this._medienListe(j.media_content_id);
+      this._melde({ ...this._config, image: medienId(j.media_content_id) });
+      this._medienListe(medienId(j.media_content_id));
     } catch (e) { st.textContent = X.hochFehler + ' ' + (e.message || e); }
   }
 }
