@@ -5,6 +5,17 @@ Alle Änderungen stehen hier. Versionen mit Bindestrich (z. B. `1.0.0-beta.1`) s
 
 ## [Unreleased]
 
+## [1.0.0-beta.3] - 2026-11-09
+
+### Added / Neu
+- Gas and water bubbles show the current flow above the bubble (m³/h, water as L/min). / Gas- und Wasser-Blase zeigen den aktuellen Durchfluss.
+- Past days are frozen: no bubbles, no animation, no live values; circles and tiles show that day's amounts. / Frühere Tage stehen still und zeigen nur Tagesmengen.
+- Options `gas_rate_max_age` (default 20 min) and `water_rate_max_age` (default 15 min).
+
+### Changed / Geändert
+- A bubble only runs when the displayed flow is above 0 and the reading is recent. / Blase nur, wenn der angezeigte Wert über 0 liegt und aktuell ist.
+- Loss percentage now refers to throughput (in plus energy taken from storage), so a day that hands out the previous day's charge no longer shows a false 100 %. / Verlust-Prozent bezieht sich auf den Durchsatz.
+
 ## [1.0.0-beta.2] - 2026-11-04
 
 ### Added / Neu

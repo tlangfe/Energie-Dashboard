@@ -75,9 +75,9 @@ Only basic sensors are needed, the card calculates the rest. Units are converted
 | `battery_content` | no | kWh | stored energy |
 | `battery_energy_in`, `battery_energy_out` | recommended | kWh | battery graphic in/out, loss, “Solar directly to home” |
 | `gas_energy` | with gas | m³/kWh | gas circle: today |
-| `gas_rate` | no | any | gas bubble runs while the value is above 0 |
+| `gas_rate` | no | any | gas bubble runs while the displayed value is above 0 and the reading is recent (`gas_rate_max_age`, default 20 min); the value is shown above the bubble |
 | `water_energy` | with water | m³/L | water circle: today in litres |
-| `water_rate` | no | any | water bubble runs while the value is above 0 |
+| `water_rate` | no | any | water bubble runs while the displayed value is above 0 and the reading is recent (`water_rate_max_age`, default 15 min); the value is shown above the bubble (m³/h as L/min) |
 
 **Signs:** `grid_power` is positive when importing and negative when exporting. `battery_power` is positive when discharging and negative when charging. This matches the Home Assistant energy settings. If your device reports it the other way round, turn on **Invert sign**.
 
@@ -160,7 +160,7 @@ The second card `custom:energie-dashboard-auswertung-card` lives in the same fil
 
 *Preview with example values.*
 
-**What it shows:** export today / this week / this month and as bars for 30 days; battery in/out and loss (same calculation as the main card, percent of “in”); history of grid, battery output, battery in/out and home with zero lines, also for a chosen day and as week/month; regulation behaviour (reaction and settling time after load steps, share of time inside the tolerance band, export peaks with duration); a daily table that can be swiped sideways on phones.
+**What it shows:** export today / this week / this month and as bars for 30 days; battery in/out and loss (same calculation as the main card, percent of throughput); history of grid, battery output, battery in/out and home with zero lines, also for a chosen day and as week/month; regulation behaviour (reaction and settling time after load steps, share of time inside the tolerance band, export peaks with duration); a daily table that can be swiped sideways on phones.
 
 **Setup:** exactly like the main card (detection from the energy settings as a suggestion, every sensor selectable, checklist). The editor has an extra section **Analysis and saving**.
 
@@ -209,7 +209,7 @@ Optional helper: `tools/ha-dashboard.mjs` (Node 22, long-lived token) creates a 
 - **Live flows** come from grid, solar and battery: solar feeds the battery first (as far as it charges), then the grid (as far as power is exported), the rest goes to the home. The battery covers export beyond solar first, the rest goes to the home. If the battery charges more than solar provides, the rest comes from the grid.
 - **Daily values** = sum of hourly statistics (“change”) since midnight plus the live part since the last full hour. Works with ever-increasing and daily-resetting meters. Past days are summed between two local midnights (daylight saving aware).
 - **“Solar directly to home” (day)** = solar − battery in − max(export − battery out, 0). This is an approximation: too high when a lot of solar is exported, and wrong when the battery charges from the grid.
-- **Battery loss (day)** = battery in − battery out − change of stored energy. The percentage is relative to **in** and labelled that way. Start-of-day content is the hourly mean before midnight.
+- **Battery loss (day)** = battery in − battery out − change of stored energy. The percentage is relative to **throughput** (in plus energy taken from storage), so a day that hands out the previous day's charge does not show a false 100 %. Start-of-day content is the hourly mean before midnight.
 - **Don't mix sources:** device daily counters and meters integrated from power often differ by 2–10 %. Use meters from the same source for values that belong together (solar, battery in/out, export).
 
 ## Versions

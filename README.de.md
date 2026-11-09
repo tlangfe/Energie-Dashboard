@@ -75,9 +75,9 @@ Du brauchst nur Grundsensoren, alles andere berechnet die Karte. Einheiten werde
 | `battery_content` | nein | kWh | Inhalt |
 | `battery_energy_in`, `battery_energy_out` | empfohlen | kWh | Akku-Grafik rein/raus, Verlust, „Solar direkt ins Haus“ |
 | `gas_energy` | mit Gas | m³/kWh | Gas-Kreis: heute |
-| `gas_rate` | nein | beliebig | Gas-Blase läuft, solange der Wert größer 0 ist |
+| `gas_rate` | nein | beliebig | Gas-Blase läuft, solange der Wert größer 0 ist; läuft nur bei angezeigtem Wert über 0 und aktuellem Messwert (`gas_rate_max_age`, Standard 20 Min), Wert steht über der Blase |
 | `water_energy` | mit Wasser | m³/L | Wasser-Kreis: heute in Litern |
-| `water_rate` | nein | beliebig | Wasser-Blase läuft, solange der Wert größer 0 ist |
+| `water_rate` | nein | beliebig | Wasser-Blase läuft, solange der Wert größer 0 ist; läuft nur bei angezeigtem Wert über 0 und aktuellem Messwert (`water_rate_max_age`, Standard 15 Min), Wert steht über der Blase |
 
 **Vorzeichen:** `grid_power` ist positiv beim Bezug und negativ bei der Einspeisung. `battery_power` ist positiv beim Entladen und negativ beim Laden. Das entspricht den Energie-Einstellungen von Home Assistant. Meldet dein Gerät es andersherum, schaltest du **Vorzeichen umdrehen** ein.
 
@@ -170,7 +170,7 @@ Die zweite Karte `custom:energie-dashboard-auswertung-card` steckt in derselben 
 
 **Was sie zeigt:**
 - Einspeisung heute, diese Woche, diesen Monat und als Balken für 30 Tage
-- Akku rein/raus und Verlust (gleiche Rechnung wie in der Hauptkarte, Prozent von „rein“)
+- Akku rein/raus und Verlust (gleiche Rechnung wie in der Hauptkarte, Prozent vom Durchsatz)
 - Verlauf von Netz, Akku-Ausgang, Akku rein/raus und Haus mit Nulllinien, auch für einen gewählten Tag (Kalender) und als Woche/Monat
 - Regelverhalten: Reaktionszeit und Ausregelzeit nach Lastsprüngen, Anteil der Zeit im Toleranzband, Einspeise-Spitzen mit Dauer
 - Tagestabelle; auf dem Handy seitlich wischbar, die erste Spalte bleibt stehen
@@ -267,7 +267,7 @@ node tools/ha-dashboard.mjs zurueck --dashboard lovelace
 - **Live-Flüsse** werden aus Netz, Solar und Akku berechnet: Solar versorgt zuerst den Akku (soweit er lädt), dann das Netz (soweit eingespeist wird), der Rest geht ins Haus. Der Akku versorgt zuerst das Netz, soweit dort mehr eingespeist wird, als Solar liefert, der Rest geht ins Haus. Lädt der Akku mehr, als Solar liefert, kommt der Rest aus dem Netz.
 - **Tageswerte** = Summe der Stundenstatistik („change“) seit Mitternacht plus der Live-Anteil seit der letzten vollen Stunde. Das funktioniert mit dauerhaft steigenden und mit täglich zurückgesetzten Zählern. Frühere Tage werden zwischen zwei lokalen Mitternächten summiert, die Zeitumstellung ist berücksichtigt.
 - **„Solar direkt ins Haus“ (Tag)** = Solar − Akku rein − max(Einspeisung − Akku raus, 0). Das ist eine Näherung: Bei viel eingespeistem Solarstrom fällt sie zu hoch aus, und wenn der Akku aus dem Netz geladen wird, ist sie falsch.
-- **Akku-Verlust (Tag)** = Akku rein − Akku raus − Änderung des Inhalts. Die Prozentangabe bezieht sich auf **rein** und ist so beschriftet. Den Inhalt am Tagesanfang liefert das Stundenmittel vor Mitternacht.
+- **Akku-Verlust (Tag)** = Akku rein − Akku raus − Änderung des Inhalts. Die Prozentangabe bezieht sich auf den **Durchsatz** (rein plus Entnahme aus dem Vorrat), damit ein Tag, der den Vorrat vom Vortag abgibt, nicht fälschlich 100 % zeigt. Den Inhalt am Tagesanfang liefert das Stundenmittel vor Mitternacht.
 - **Nicht mischen:** Geräte-Tageszähler und aus Leistung integrierte Zähler weichen oft 2–10 % voneinander ab. Für zusammengehörende Werte (Solar, Akku rein/raus, Einspeisung) möglichst Zähler aus derselben Quelle wählen, sonst passen die Summen nicht zusammen.
 
 ## Versionen

@@ -27,13 +27,13 @@ const FAKTOR = {
   energy: { Wh: 1e-3, kWh: 1, MWh: 1e3, GWh: 1e6 },
   volume: { 'm³': 1, m3: 1, L: 1e-3, l: 1e-3, 'ft³': 0.0283168, ft3: 0.0283168, CCF: 2.83168, gal: 0.00378541 },
 };
-const VERSION = '1.0.0-beta.2';
+const VERSION = '1.0.0-beta.3';
 const TXT = {
   de: {
     title: 'Energie', solar: 'Solar', akku: 'Akku', bezug: 'Bezug', eingespeist: 'eingespeist', gas: 'Gas', wasser: 'Wasser', heute: 'heute', Heute: 'Heute',
     laedt: 'lädt', gibt: 'gibt', zuHaus: '→ Haus', zuAkku: '→ Akku', zuHausAkku: '→ Haus + Akku', zuNetz: '→ Netz',
     dash: 'Energie-Dashboard', verlauf: 'Stromverlauf', tagWaehlen: 'Tag wählen', zurueck: 'Einen Tag zurück', vor: 'Einen Tag vor', zuHeute: 'Zurück zu heute',
-    pvAkt: 'PV Leistung aktuell', sd: 'Solar direkt ins Haus', inhalt: 'Inhalt', rein: 'rein', raus: 'raus', verlust: 'Verlust', vonRein: 'von rein',
+    pvAkt: 'PV Leistung aktuell', sd: 'Solar direkt ins Haus', inhalt: 'Inhalt', rein: 'rein', raus: 'raus', verlust: 'Verlust', vonRein: 'vom Durchsatz',
     gesamt: 'Solar + Akku gesamt', insHaus: 'ins Haus', zaehler: 'Stromfluss am Zähler', ein: 'ein', bilanz: 'Energiebilanz', defizit: 'Defizit', ueber: 'Überschuss', ausgl: 'ausgeglichen',
     pv: 'PV', haus: 'Haus', einsp: 'Einspeisung', netzbezug: 'Netzbezug', hausverbrauch: 'Hausverbrauch', akkuRaus: 'Akku raus', akkuRein: 'Akku rein',
     f15: '15 Min', f1: '1 Std', f6: '6 Std', keineDaten: 'Der Akku meldet gerade keine Daten.', fehlt: 'Sensor nicht gefunden:', bildFehler: 'Das Hausbild konnte nicht geladen werden, die Standardzeichnung wird gezeigt.',
@@ -44,7 +44,7 @@ const TXT = {
     title: 'Energy', solar: 'Solar', akku: 'Battery', bezug: 'Import', eingespeist: 'exported', gas: 'Gas', wasser: 'Water', heute: 'today', Heute: 'Today',
     laedt: 'charging', gibt: 'discharging', zuHaus: '→ Home', zuAkku: '→ Battery', zuHausAkku: '→ Home + Battery', zuNetz: '→ Grid',
     dash: 'Energy dashboard', verlauf: 'Power history', tagWaehlen: 'Choose day', zurueck: 'One day back', vor: 'One day forward', zuHeute: 'Back to today',
-    pvAkt: 'Solar power now', sd: 'Solar directly to home', inhalt: 'Stored', rein: 'in', raus: 'out', verlust: 'Loss', vonRein: 'of in',
+    pvAkt: 'Solar power now', sd: 'Solar directly to home', inhalt: 'Stored', rein: 'in', raus: 'out', verlust: 'Loss', vonRein: 'of throughput',
     gesamt: 'Solar + battery total', insHaus: 'to home', zaehler: 'Grid meter', ein: 'export', bilanz: 'Energy balance', defizit: 'deficit', ueber: 'surplus', ausgl: 'balanced',
     pv: 'Solar', haus: 'Home', einsp: 'Export', netzbezug: 'Grid import', hausverbrauch: 'Home consumption', akkuRaus: 'Battery out', akkuRein: 'Battery in',
     f15: '15 min', f1: '1 h', f6: '6 h', keineDaten: 'The battery is not reporting data right now.', fehlt: 'Sensor not found:', bildFehler: 'The house image could not be loaded, showing the default drawing.',
@@ -119,6 +119,8 @@ function tagesWert(zeilen, live, m) {
   return Math.max(sum + (live >= letzte.state ? live - letzte.state : live), 0);
 }
 const summeChange = (zeilen, von, bis) => { if (!zeilen || !zeilen.length) return null; let s = 0, n = 0; for (const z of zeilen) { const t = ts(z.start); if (t >= von && t < bis && istZahl(z.change)) { s += z.change; n++; } } return n ? Math.max(s, 0) : null; };
+// Bezug fuer die Prozentangabe: Ladung plus Entnahme aus dem Vorrat, sonst waere ein Tag, der den Vorrat vom Vortag abgibt, scheinbar 100 %
+const durchsatz = (rein, k0, k1) => [rein, k0, k1].every(istZahl) ? rein + Math.max(k0 - k1, 0) : null;
 const verlust = (rein, raus, k0, k1) => [rein, raus, k0, k1].every(istZahl) ? Math.max(rein - raus - (k1 - k0), 0) : null;
 
 // Kreise: feste Positionen in viewBox 0 0 1000 H
@@ -129,7 +131,7 @@ const TEMPO = 45; // Gas/Wasser: Einheiten pro Sekunde, bewusst langsam
 const tempoW = w => clamp(4 + 2.2 * Math.sqrt(Math.max(w, 0)), 6, 45); // Strom: 7 W = 10, 110 W = 27, ab 340 W = 45
 const RUNDE_MIN = 4; // Sekunden je Runde mindestens, sonst zucken kurze Linien
 const NUR_BLASE = { sa: 1 }; // Weg liegt auf vorhandenen Punktlinien
-const WATT_AN = { sh: 1, sa: 1, akku: 1 }; // Linien mit Wattzahl ueber der Blase
+const WATT_AN = { sh: 1, sa: 1, akku: 1, gas: 1, wasser: 1 }; // Linien mit Wattzahl ueber der Blase
 // Kubische Kurve von a nach b, leicht nach aussen gebogen (weg vom Mittelpunkt mz)
 function kurve(a, b, biege, kA, kB, mz) {
   let [x1, y1] = a, [x2, y2] = b; const L = Math.hypot(x2 - x1, y2 - y1) || 1, ux = (x2 - x1) / L, uy = (y2 - y1) / L;
@@ -274,6 +276,8 @@ b[data-e]:hover,small[data-e]:hover,.t em[data-e]:hover,.bl span[data-e]:hover{t
 .leg span{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
 .leg i{width:9px;height:9px;border-radius:3px}
 .leg i.li{height:2px;background:var(--ink)}
+.w.fest .sw,.w.fest .dr,.w.fest .we,.w.fest .pf,.w.fest .kn ha-icon,.w.fest .ri .d,.w.fest .bil::before{animation:none!important}
+.w.fest .kn.zw b:first-of-type,.w.fest .t small.lv{display:none}
 .hinw{margin:3px 2px 0;font-size:11.5px;color:#ff9d7a;display:none}
 /* Handy/App: Kreise groesser, zum Rand hin eingerueckt */
 @container (max-width:385px){
@@ -383,7 +387,7 @@ class EnergieDashboardCard extends HTMLElement {
     this._strings = strings;
     // Kacheln: halbe Breite, bei ungerader Anzahl wird die letzte breit
     const halb = [];
-    if (an.solar) halb.push(`<div class="t" ${e(c.solar_power)}>${sonne}<div class="x"><span class="n">${esc(T.pvAkt)}</span><b id="t_pv">–</b>${strings.length ? `<small>${strings.map((s, i) => `<span id="t_s${i}" ${e(s.entity)}></span>`).join(' · ')}</small>` : ''}<small class="ges sd" ${e(c.solar_energy)}>${esc(T.sd)}<span id="t_sd">–</span></small></div></div>`);
+    if (an.solar) halb.push(`<div class="t" ${e(c.solar_power)}>${sonne}<div class="x"><span class="n" id="t_pvn">${esc(T.pvAkt)}</span><b id="t_pv">–</b>${strings.length ? `<small class="lv">${strings.map((s, i) => `<span id="t_s${i}" ${e(s.entity)}></span>`).join(' · ')}</small>` : ''}<small class="ges sd" ${e(c.solar_energy)}>${esc(T.sd)}<span id="t_sd">–</span></small></div></div>`);
     if (an.akku) halb.push(`<div class="t" ${e(c.battery_soc)}>${batt}<div class="x"><span class="n" id="t_akn">${esc(T.akku)}</span><b id="t_ak" ${e(akkuKlick)}>–</b><small id="t_aks" ${e(c.battery_content || c.battery_soc)}></small><small class="ges"><span id="t_ar" ${e(c.battery_energy_in)}></span> · <span id="t_au" ${e(c.battery_energy_out)}></span></small></div></div>`);
     if (an.solar && an.akku) halb.push(`<div class="t" ${e(c.solar_power)}>${flussT}<div class="x"><span class="n">${esc(T.gesamt)}</span><b id="t_ge">–</b><small>${esc(T.insHaus)}</small></div></div>`);
     halb.push(`<div class="t" ${e(c.grid_power || c.grid_import_power)}>${uhr}<div class="x"><span class="n">${esc(T.zaehler)}</span><b id="t_ne">–</b><small class="ges"><span id="t_nb" ${e(c.grid_import_energy)}></span> · <span id="t_ne2" ${e(c.grid_export_energy)}></span></small></div></div>`);
@@ -509,7 +513,7 @@ class EnergieDashboardCard extends HTMLElement {
       const inhalt = vorn => c.battery_content ? mittel(c.battery_content, vorn) : (c.battery_soc && +c.battery_capacity ? (v => istZahl(v) ? v / 100 * c.battery_capacity : null)(mittel(c.battery_soc, vorn)) : null);
       const socMax = (() => { const w = (r[c.battery_soc] || []).filter(x => ts(x.start) >= t && ts(x.start) < bis && istZahl(x.max)).map(x => x.max); return w.length ? Math.max(...w) : null; })();
       const rein = sum(c.battery_energy_in), raus = sum(c.battery_energy_out), k0 = inhalt(true), k1 = inhalt(false);
-      this._tagD = { solar: sum(c.solar_energy), bezug: sum(c.grid_import_energy), einsp: sum(c.grid_export_energy), rein, raus, gas: sum(c.gas_energy), wasser: sum(c.water_energy), inhalt: k1, soc: mittel(c.battery_soc, false), socMax, verlust: verlust(rein, raus, k0, k1) };
+      this._tagD = { solar: sum(c.solar_energy), bezug: sum(c.grid_import_energy), einsp: sum(c.grid_export_energy), rein, raus, gas: sum(c.gas_energy), wasser: sum(c.water_energy), inhalt: k1, soc: mittel(c.battery_soc, false), socMax, verlust: verlust(rein, raus, k0, k1), durchsatz: durchsatz(rein, k0, k1) };
       this._zeig();
     } catch (e) { console.warn('energie-dashboard-card: day', e); this._tagD = {}; this._zeig(); }
   }
@@ -524,7 +528,7 @@ class EnergieDashboardCard extends HTMLElement {
     const T = this._t;
     if (this._tag) return { lab: this._fmt.datum(this._tag), heute: false, ...(this._tagD || {}) };
     const soc = wert(this._hass, this._c.battery_soc, 'soc'), k = this._inhaltLive(), rein = this._heute('battery_energy_in'), raus = this._heute('battery_energy_out');
-    return { lab: T.heute, heute: true, solar: this._heute('solar_energy'), bezug: this._heute('grid_import_energy'), einsp: this._heute('grid_export_energy'), rein, raus, gas: this._heute('gas_energy'), wasser: this._heute('water_energy'), inhalt: k, soc, socMax: istZahl(this._socMaxH) ? Math.max(this._socMaxH, soc ?? 0) : null, verlust: verlust(rein, raus, this._inhaltMitternacht(), k) };
+    return { lab: T.heute, heute: true, solar: this._heute('solar_energy'), bezug: this._heute('grid_import_energy'), einsp: this._heute('grid_export_energy'), rein, raus, gas: this._heute('gas_energy'), wasser: this._heute('water_energy'), inhalt: k, soc, socMax: istZahl(this._socMaxH) ? Math.max(this._socMaxH, soc ?? 0) : null, verlust: verlust(rein, raus, this._inhaltMitternacht(), k), durchsatz: durchsatz(rein, this._inhaltMitternacht(), k) };
   }
   _akkuGrafik(w) {
     const s = this._e('ag'), c = this._c, F = this._fmt, T = this._t; if (!s) return; const rein = istZahl(w.rein) ? w.rein : null, raus = istZahl(w.raus) ? w.raus : null, mx = Math.max(rein || 0, raus || 0, 0.05), soc = istZahl(w.soc) ? clamp(w.soc, 0, 100) : null;
@@ -537,7 +541,7 @@ class EnergieDashboardCard extends HTMLElement {
       + pfeil(183, 213, y, dk(raus), FU) + `<text x="218" y="20"${de(c.battery_energy_out)} style="cursor:pointer;fill:#7cc2ff;font-size:13.5px;font-weight:800">${F.whk(raus)}</text><text x="300" y="19.5" text-anchor="end" style="font-size:12px;fill:#a7b6c5">${esc(T.raus)}</text>`;
     this._txt('ag_t', T.akku + ' ' + w.lab + (soc === null ? '' : ' · ' + F.zahl(soc, 0) + ' %')); const i = this._e('ag_i'), v = this._e('ag_v');
     if (i) i.innerHTML = `${esc(T.inhalt)} <b>${F.whk(w.inhalt)}</b>`;
-    if (v) v.innerHTML = `${esc(T.verlust)} <b>${!istZahl(w.verlust) ? '–' : F.whk(w.verlust) + (w.rein >= 0.05 ? ` (${F.zahl(Math.min(w.verlust / w.rein * 100, 100), 0)} % ${esc(T.vonRein)})` : '')}</b>`;
+    if (v) v.innerHTML = `${esc(T.verlust)} <b>${!istZahl(w.verlust) ? '–' : F.whk(w.verlust) + (w.durchsatz >= 0.05 ? ` (${F.zahl(Math.min(w.verlust / w.durchsatz * 100, 100), 0)} % ${esc(T.vonRein)})` : '')}</b>`;
   }
   // Rohsensoren fuer Verlauf und Diagramm
   _rohIds() { const c = this._c, an = this._an; return [an.solar && c.solar_power, c.grid_power, c.grid_import_power, c.grid_export_power, an.akku && c.battery_power, an.akku && c.battery_charge_power, an.akku && c.battery_discharge_power].filter(Boolean); }
@@ -576,7 +580,7 @@ class EnergieDashboardCard extends HTMLElement {
     return o;
   }
   _zeichne() {
-    if (!this._d || !this._e || !this._e('ver') || this._e('ver').hidden) return; const ch = this._e('chart'), W = ch.clientWidth; if (!W) return;
+    if (!this._d || !this._e || !this._e('ver') || this._e('ver').hidden || this._tag) return; const ch = this._e('chart'), W = ch.clientWidth; if (!W) return;
     const c = this._c, an = this._an, F = this._fmt, T = this._t;
     const H = 165, L = 42, R = 6, Tp = 8, B = 20, iw = W - L - R, ih = H - Tp - B;
     const f = this._fenster[this._fi][1], bis = Date.now() / 1000, von = f ? bis - f : mitternacht().getTime() / 1000;
@@ -628,7 +632,7 @@ class EnergieDashboardCard extends HTMLElement {
   }
   _txt(id, t) { const e = this._e(id); if (e && e.textContent !== t) e.textContent = t; }
   // Blasen an/aus; Tempo und Richtung nur bei Aenderung setzen, sonst springen sie
-  _fluss(k, an, p, rev, farbe) {
+  _fluss(k, an, p, rev, farbe, text) {
     const f = this._e('f_' + k), l = this._e('l_' + k); if (!l) return;
     l.classList.toggle('an', an); if (farbe) l.setAttribute('stroke', farbe);
     if (!f) return; f.classList.toggle('an', an);
@@ -638,13 +642,19 @@ class EnergieDashboardCard extends HTMLElement {
     const r = !!rev; if (b.rev !== r) { b.rev = r; b.pos = b.rng ? b.rng - b.pos : 0; }
     b.an = an; b.v = k === 'gas' || k === 'wasser' ? TEMPO : tempoW(p);
     // Wattzahl hoechstens alle 3 s aendern, damit sie ruhig bleibt
-    if (b.t && an && Date.now() - b.tz > 3000) { b.tz = Date.now(); const w = this._fmt.watt(p); if (b.t.textContent !== w) b.t.textContent = w; }
+    if (b.t && an && Date.now() - b.tz > 3000) { b.tz = Date.now(); const w = text ?? this._fmt.watt(p); if (b.t.textContent !== w) b.t.textContent = w; }
   }
   _kn(id, an) { const e = this._e('n_' + id); if (e) e.classList.toggle('ak', !!an); }
-  // Gas/Wasser aktiv: Durchfluss > 0 und aktuell; ohne Durchflusssensor: Zaehler hat sich gerade geaendert
-  _aktiv(rate, zaehler, maxMin) {
+  // Durchfluss fuer die Anzeige ueber der Blase; Wasser aus m3/h in L/min, sonst Einheit des Sensors
+  _rate(id, liter) {
+    const s = id && this._hass.states[id], v = s ? parseFloat(s.state) : NaN; if (!Number.isFinite(v)) return { anz: 0, text: '' };
+    const u = s.attributes.unit_of_measurement || '', l = liter && u === 'm³/h', x = l ? v * 1000 / 60 : v, d = l ? (x < 10 ? 1 : 0) : (x < 10 ? 2 : 1);
+    return { anz: +x.toFixed(d), text: this._fmt.zahl(x, d) + (l ? ' L/min' : u ? ' ' + u : '') };
+  }
+  // Gas/Wasser aktiv: angezeigter Durchfluss > 0 und Messwert aktuell; ohne Durchflusssensor: Zaehler hat sich gerade geaendert
+  _aktiv(rate, zaehler, maxMin, liter) {
     const h = this._hass;
-    if (rate) { const s = h.states[rate]; if (!s) return false; const v = parseFloat(s.state); return Number.isFinite(v) && v > 0 && Date.now() - Date.parse(s.last_updated) < maxMin * 60e3; }
+    if (rate) { const s = h.states[rate]; if (!s || !(this._rate(rate, liter).anz > 0)) return false; return Date.now() - Math.max(Date.parse(s.last_updated), Date.parse(s.last_reported || 0) || 0) < maxMin * 60e3; }
     const s = h.states[zaehler]; return !!s && Number.isFinite(parseFloat(s.state)) && Date.now() - Date.parse(s.last_changed) < 10 * 60e3;
   }
   _zeig() {
@@ -658,7 +668,7 @@ class EnergieDashboardCard extends HTMLElement {
     const hw = []; if (fehl.length) hw.push(T.fehlt + ' ' + fehl.join(', ')); if (an.akku && c.battery_soc && h.states[c.battery_soc] && soc === null) hw.push(T.keineDaten); if (this._bildFehler) hw.push(T.bildFehler);
     const hi = this._e('hinw'); hi.textContent = hw.join(' '); hi.style.display = hw.length ? 'block' : 'none';
     const gasE = gasIstEnergie(h, c.gas_energy);
-    const gasAn = an.gas && this._aktiv(c.gas_rate, c.gas_energy, 20), wasAn = an.wasser && this._aktiv(c.water_rate, c.water_energy, 45);
+    const gasAn = an.gas && this._aktiv(c.gas_rate, c.gas_energy, +c.gas_rate_max_age || 20), wasAn = an.wasser && this._aktiv(c.water_rate, c.water_energy, +c.water_rate_max_age || 15, true);
     const TW = this._tw(); this._akkuGrafik(TW);
     // Kreise
     if (an.solar) { this._txt('v_solar', F.watt(pv)); this._txt('v2_solar', F.kwh(TW.solar)); this._kn('solar', pv > 5); }
@@ -666,7 +676,7 @@ class EnergieDashboardCard extends HTMLElement {
       this._txt('v_akku', soc === null ? '–' : F.zahl(soc, 0) + ' %'); this._txt('u_akku', lad ? T.laedt + ' ' + F.watt(q.chg) : ent ? T.gibt + ' ' + F.watt(q.dis) : T.akku); this._kn('akku', lad || ent);
       { const mx = istZahl(TW.socMax) ? TW.socMax : null, gm = this._e('g_mx'); if (gm) { const L = 2 * Math.PI * 53, d = mx === null ? 0 : clamp(mx, 0, 100) / 100 * L; gm.style.strokeDasharray = `${d.toFixed(1)} ${(L - d).toFixed(1)}`; gm.style.opacity = mx === null ? 0 : 1; } this._txt('t_mx', mx === null ? '' : 'max ' + F.zahl(mx, 0) + ' %'); }
       const arc = this._e('g_arc'); if (arc && soc !== null) { const L = 2 * Math.PI * 43, d = clamp(soc, 0, 100) / 100 * L; arc.style.strokeDasharray = `${d.toFixed(1)} ${(L - d).toFixed(1)}`; arc.style.stroke = soc < 20 ? '#ff6b4a' : soc < 50 ? '#ffc14d' : '#3fe09f'; }
-      const ic = this._e('i_akku'); if (ic && soc !== null) { const st = lad ? 'mdi:battery-charging-' : 'mdi:battery-'; const lv = clamp(Math.round(soc / 10) * 10, 10, 100); const nm = lv === 100 && !lad ? 'mdi:battery' : st + lv; if (ic.getAttribute('icon') !== nm) ic.setAttribute('icon', nm); }
+      const ic = this._e('i_akku'); if (ic && soc !== null && !this._tag) { const st = lad ? 'mdi:battery-charging-' : 'mdi:battery-'; const lv = clamp(Math.round(soc / 10) * 10, 10, 100); const nm = lv === 100 && !lad ? 'mdi:battery' : st + lv; if (ic.getAttribute('icon') !== nm) ic.setAttribute('icon', nm); }
       const ua = this._e('u_akku'); if (ua) { const z = lad ? (c.battery_charge_power || c.battery_power) : ent ? (c.battery_discharge_power || c.battery_power) : c.battery_soc; if (z) ua.dataset.e = z; }
     }
     this._txt('v_haus', F.watt(hausLive)); this._txt('v2_haus', F.kwh(TW.bezug)); this._txt('u_haus', T.bezug + ' ' + TW.lab); this._kn('haus', hausLive > 5);
@@ -688,10 +698,10 @@ class EnergieDashboardCard extends HTMLElement {
     const insHaus = q.g2h + q.b2h;
     this._fluss('haus', ok && insHaus > 5, insHaus);
     this._fluss('netz', ok && Math.abs(grid) > 5, Math.abs(grid || 0), grid < 0, grid < 0 ? '#ff6f9f' : '#5db2ff');
-    if (an.gas) this._fluss('gas', gasAn, 200); if (an.wasser) this._fluss('wasser', wasAn, 200);
+    if (an.gas) this._fluss('gas', gasAn, 200, false, null, this._rate(c.gas_rate).text); if (an.wasser) this._fluss('wasser', wasAn, 200, false, null, this._rate(c.water_rate, true).text);
     // Kachel PV
     if (an.solar) {
-      this._txt('t_pv', F.watt(pv)); (this._strings || []).forEach((s, i) => this._txt('t_s' + i, s.name + ' ' + F.watt(g(s.entity))));
+      this._txt('t_pvn', T.pvAkt); this._txt('t_pv', F.watt(pv)); (this._strings || []).forEach((s, i) => this._txt('t_s' + i, s.name + ' ' + F.watt(g(s.entity))));
       // Solar direkt ins Haus = Solar minus Akku-Ladung; Einspeisung nur abziehen, soweit sie nicht aus dem Akku stammen kann
       const w = TW; let sd = null; if (istZahl(w.solar)) sd = Math.max(w.solar - (an.akku ? (w.rein || 0) : 0) - Math.max((w.einsp || 0) - (an.akku ? (w.raus || 0) : 0), 0), 0);
       this._txt('t_sd', sd === null ? '–' : w.lab + ' ' + F.whk(sd));
@@ -721,6 +731,37 @@ class EnergieDashboardCard extends HTMLElement {
     this._txt('t_bin', this._bil === 'd' ? T.bilanz + ': ' + T.defizit : this._bil === 'u' ? T.bilanz + ': ' + T.ueber : this._bil === 'a' ? T.bilanz + ': ' + T.ausgl : T.bilanz);
     const bk = this._e('t_bil'); if (bk) bk.classList.toggle('def', this._bil === 'd');
     this._txt('stand', new Date().toLocaleTimeString(F.loc, { hour: '2-digit', minute: '2-digit' }));
+    const wr = this.shadowRoot.querySelector('.w'); if (wr) wr.classList.toggle('fest', !!this._tag);
+    if (this._tag) this._festAnzeige(TW);
+  }
+  // Frueherer Tag: keine Bewegung, keine Live-Werte, nur die gespeicherten Werte dieses Tages
+  _festAnzeige(w) {
+    const c = this._c, an = this._an, F = this._fmt, T = this._t, z = v => istZahl(v) ? v : null;
+    ['sh', 'sa', 'solar', 'dach', 'akku', 'ac', 'haus', 'netz', 'gas', 'wasser'].forEach(k => this._fluss(k, false, 0));
+    ['solar', 'akku', 'haus', 'netz', 'gas', 'wasser'].forEach(k => this._kn(k, false));
+    const soc = z(w.soc), rein = z(w.rein), raus = z(w.raus), bezug = z(w.bezug), einsp = z(w.einsp), solar = z(w.solar);
+    this._txt('stand', w.lab);
+    if (an.solar) {
+      this._txt('u_solar', T.solar + ' ' + w.lab); this._txt('t_pvn', T.solar + ' ' + w.lab); this._txt('t_pv', F.kwh(solar));
+      const dr = this._e('g_sonne'), sk = this._e('g_sk'), hell = (solar || 0) > 0; if (dr) dr.style.opacity = hell ? 1 : .25; if (sk) { sk.setAttribute('fill', hell ? '#f4b81f' : '#4a5763'); sk.setAttribute('stroke', hell ? '#c98500' : '#6e7f8c'); }
+    }
+    if (an.akku) {
+      const fb = soc === null ? '#5b6b7c' : soc < 20 ? '#e4573d' : soc < 50 ? '#eab530' : '#23b27c';
+      this._txt('v_akku', soc === null ? '–' : F.zahl(soc, 0) + ' %'); this._txt('u_akku', T.akku + ' ' + w.lab);
+      const ua = this._e('u_akku'); if (ua && c.battery_soc) ua.dataset.e = c.battery_soc;
+      const arc = this._e('g_arc'); if (arc) { const L = 2 * Math.PI * 43, d = soc === null ? 0 : clamp(soc, 0, 100) / 100 * L; arc.style.strokeDasharray = `${d.toFixed(1)} ${(L - d).toFixed(1)}`; arc.style.stroke = soc === null ? 'transparent' : soc < 20 ? '#ff6b4a' : soc < 50 ? '#ffc14d' : '#3fe09f'; }
+      const ic = this._e('i_akku'); if (ic && soc !== null) { const lv = clamp(Math.round(soc / 10) * 10, 10, 100), nm = lv === 100 ? 'mdi:battery' : 'mdi:battery-' + lv; if (ic.getAttribute('icon') !== nm) ic.setAttribute('icon', nm); }
+      this._txt('t_akn', T.akku + ' ' + (soc === null ? w.lab : F.zahl(soc, 0) + ' %')); this._txt('t_ak', z(w.socMax) === null ? '–' : 'max ' + F.zahl(w.socMax, 0) + ' %'); this._txt('t_aks', T.inhalt + ' ' + F.kwh(z(w.inhalt)));
+      const fl = this._e('g_fl'), we = this._e('g_we'); if (fl) fl.style.transform = `translateY(${42 - clamp(soc ?? 0, 0, 100) * .44}px)`; if (we) we.setAttribute('fill', fb);
+    }
+    const sd = solar === null ? null : Math.max(solar - (an.akku ? (rein || 0) : 0) - Math.max((einsp || 0) - (an.akku ? (raus || 0) : 0), 0), 0);
+    if (an.solar && an.akku) { this._txt('t_ge', sd === null ? '–' : F.kwh(sd + (raus || 0))); [['g_p1', sd > 0], ['g_p2', raus > 0]].forEach(([id, a]) => { const e = this._e(id); if (e) e.style.opacity = a ? 1 : .15; }); }
+    this._txt('t_ne', bezug === null ? '–' : F.kwh(bezug) + ' ' + T.bezug); const zg = this._e('g_z'); if (zg) zg.style.transform = 'rotate(0deg)';
+    const haus = bezug === null ? null : Math.max(bezug + (an.solar ? (solar || 0) : 0) - (einsp || 0) - (an.akku ? (rein || 0) - (raus || 0) : 0), 0), netto = an.akku && (rein !== null || raus !== null) ? (raus || 0) - (rein || 0) : null;
+    const wer = { bezug: bezug || 0, pv: solar || 0, akku: Math.abs(netto || 0), haus: haus || 0, einsp: einsp || 0 }, mx = Math.max(.1, ...Object.values(wer));
+    for (const [k, v] of Object.entries(wer)) { const u = this._e('ba_' + k); if (u) u.style.width = (v / mx * 100).toFixed(1) + '%'; }
+    this._txt('bv_bezug', F.kwh(bezug)); this._txt('bv_pv', F.kwh(solar)); this._txt('bv_akku', netto === null ? '–' : netto > 0 ? F.whk(netto) + ' ' + T.raus : netto < 0 ? F.whk(-netto) + ' ' + T.rein : '0 Wh'); this._txt('bv_haus', F.kwh(haus)); this._txt('bv_einsp', F.kwh(einsp));
+    this._txt('t_bin', T.bilanz + ' ' + w.lab); const bk = this._e('t_bil'); if (bk) bk.classList.remove('def');
   }
 }
 // ---------- Automatische Erkennung aus den Energie-Einstellungen ----------
@@ -1104,8 +1145,8 @@ const TXT_A = {
   de: {
     titel: 'Energie Auswertung', sub: 'Wie gut der Akku deinen Stromverbrauch ausregelt und was trotzdem ins Netz geht.', subOhne: 'Was ins Netz geht und wie Netz und Haus verlaufen.',
     einsp: 'Trotzdem eingespeist', einspOhne: 'Eingespeist', heute: 'Heute', woche: 'Diese Woche', monat: 'Dieser Monat', seitMn: 'seit Mitternacht', seit: 'seit',
-    akku: 'Akku: rein und raus', reinRaus: 'rein / raus', verlust: 'Verlust', vonRein: 'von rein',
-    verlustText: 'Verlust = Akku rein − Akku raus − Änderung des Akku-Inhalts, aus denselben Zählern wie in der Hauptkarte. Der Prozentwert bezieht sich auf „rein“. Er enthält auch den Eigenverbrauch des Geräts; bei kleinen Tageswerten schwankt er, weil der Inhalt meist in 1-%-Schritten gemeldet wird.',
+    akku: 'Akku: rein und raus', reinRaus: 'rein / raus', verlust: 'Verlust', vonRein: 'vom Durchsatz',
+    verlustText: 'Verlust = Akku rein − Akku raus − Änderung des Akku-Inhalts, aus denselben Zählern wie in der Hauptkarte. Der Prozentwert bezieht sich auf alles, was durch den Akku ging: rein plus Entnahme aus dem Vorrat. Er enthält auch den Eigenverbrauch des Geräts; bei kleinen Tageswerten schwankt er, weil der Inhalt meist in 1-%-Schritten gemeldet wird.',
     verlauf: 'Netz, Akku und Haus', verlaufOhne: 'Netz und Haus', tagWaehlen: 'Tag wählen', zurueck: 'Einen Tag zurück', vor: 'Einen Tag vor',
     f15: '15 Min', f1: '1 Std', f6: '6 Std', fH: 'Heute', fW: 'Woche', fM: 'Monat',
     netz: 'Netz', ac: 'Akku-Ausgang', haus: 'Haus', rein: 'Akku rein', raus: 'Akku raus', reinraus: 'Akku rein / raus', unterNull: 'Einspeisung (unter null)', zurueckRaus: 'raus',
@@ -1133,8 +1174,8 @@ const TXT_A = {
   en: {
     titel: 'Energy analysis', sub: 'How well the battery balances your consumption and what still goes to the grid.', subOhne: 'What goes to the grid and how grid and home develop.',
     einsp: 'Still exported', einspOhne: 'Exported', heute: 'Today', woche: 'This week', monat: 'This month', seitMn: 'since midnight', seit: 'since',
-    akku: 'Battery: in and out', reinRaus: 'in / out', verlust: 'Loss', vonRein: 'of in',
-    verlustText: 'Loss = battery in − battery out − change of stored energy, from the same meters as the main card. The percentage is relative to “in”. It includes the device’s own consumption; small daily values fluctuate because the content is usually reported in 1 % steps.',
+    akku: 'Battery: in and out', reinRaus: 'in / out', verlust: 'Loss', vonRein: 'of throughput',
+    verlustText: 'Loss = battery in − battery out − change of stored energy, from the same meters as the main card. The percentage is relative to everything that went through the battery: in plus energy taken from storage. It includes the device’s own consumption; small daily values fluctuate because the content is usually reported in 1 % steps.',
     verlauf: 'Grid, battery and home', verlaufOhne: 'Grid and home', tagWaehlen: 'Choose day', zurueck: 'One day back', vor: 'One day forward',
     f15: '15 min', f1: '1 h', f6: '6 h', fH: 'Today', fW: 'Week', fM: 'Month',
     netz: 'Grid', ac: 'Battery output', haus: 'Home', rein: 'Battery in', raus: 'Battery out', reinraus: 'Battery in / out', unterNull: 'Export (below zero)', zurueckRaus: 'out',
@@ -1406,8 +1447,8 @@ class EnergieDashboardAuswertungCard extends HTMLElement {
     if (t >= Date.now() - 60e3) { const v = wert(this._hass, id, c.battery_content ? 'energy' : 'soc'); return istZahl(v) ? umr(v) : null; }
     const a = ((this._eSt || {})[id] || []).filter(z => ts(z.start) < t && istZahl(z.mean)); return a.length ? umr(a[a.length - 1].mean) : null;
   }
-  _bilanz(von, bis) { const rein = this._energie('battery_energy_in', von, bis), raus = this._energie('battery_energy_out', von, bis), k0 = this._inhalt(von), k1 = this._inhalt(Math.min(bis, Date.now())); return { rein, raus, verlust: verlust(rein, raus, k0, k1) }; }
-  _vText(x) { const F = this._F; if (!x || !istZahl(x.verlust)) return '–'; return F.whk(x.verlust) + (x.rein >= 0.05 ? ` (${F.zahl(Math.min(x.verlust / x.rein * 100, 100), 0)} % ${this._T.vonRein})` : ''); }
+  _bilanz(von, bis) { const rein = this._energie('battery_energy_in', von, bis), raus = this._energie('battery_energy_out', von, bis), k0 = this._inhalt(von), k1 = this._inhalt(Math.min(bis, Date.now())); return { rein, raus, verlust: verlust(rein, raus, k0, k1), durchsatz: durchsatz(rein, k0, k1) }; }
+  _vText(x) { const F = this._F; if (!x || !istZahl(x.verlust)) return '–'; return F.whk(x.verlust) + (x.durchsatz >= 0.05 ? ` (${F.zahl(Math.min(x.verlust / x.durchsatz * 100, 100), 0)} % ${this._T.vonRein})` : ''); }
   _zeigeEnergie() {
     if (!this._eSt) return; const F = this._F, T = this._T, j = Date.now() + 1, perioden = [['t', mitternacht()], ['w', montag()], ['m', monatsanfang()]];
     for (const [k, d] of perioden) {
